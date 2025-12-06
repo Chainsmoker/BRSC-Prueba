@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Lista de Trámites {% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<link rel="stylesheet" href="{% static 'css/tramites/tramites.css' %}">
+
+<div class="page-title">
+    LISTADO DE TRÁMITES
+</div>
+
+<div class="px-3 filters-section">
+    <h5 class="mb-2">Filtros para localizar el trámite&nbsp;&nbsp;<i class="bi bi-search"></i></h5>
+    <div class="row mb-3">
+                        <!-- kardex -->
+                         <div class="col ">
+                            <label class="form-label">Código</label>
+                            <input type="text" class="form-control filter-input" data-column="0">
+                        </div>
+                        <!-- Tipo de trámite -->
+                        <div class="col">
+                            <label class="form-label">Tipo de trámite</label>
+                            <select class="form-select filter-input" data-column="3">
+                                <option value="">Todos los trámites</option>
+                                {% for esp in especialidades %}
+                                    <option value="{{ esp }}">{{ esp }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col">
+                            <label class="form-label">Destinatario</label>
+                            <input type="text" class="form-control filter-input" data-column="4">
+                        </div>
+                        <div class="col ">
+                            <label class="form-label">Partes Intervinientes</label>
+                            <input type="text" class="form-control filter-input" data-column="5">
+                        </div>
+                        <div class="col ">
+                            <label class="form-label">Sumilla</label>
+                            <input type="text" class="form-control filter-input" data-column="6">
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Responsable</label>
+                            <select class="form-select filter-input" data-column="8" id="responsableSelect">
+                                <option value="">Seleccionar todo</option>
+                                {% for user in usuarios_legales %}
+                                    <option value="{{ user.first_name }}">
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Alerta</label>
+                            <select class="form-select filter-input" data-column="alerta" id="alertaSelect">
+                                <option value="">Seleccionar todo</option>
+                                <option value="danger">🟥 Urgente (≤ 5 días)</option>
+                                <option value="warning">🟨 Próximo (≤ 10 días)</option>
+                                <option value="success">🟩 A tiempo (> 10 días)</option>
+                                <option value="secondary">⬛ Sin fecha asignada</option>
+                            </select>
+
+                        </div>
+                       
+
+                        <!-- Botón Limpiar Filtros -->
+                        <div class="col">
+                            <label class="form-label" style="color: #F2F9FF;">Limpiar</label>
+                            <a href="{% url 'tramites:lista_tramite' %}" id="clearFilters"
+                                class="form-control btn btn-secondary text-center"
+                                style="background-color: #10598A; border: none; line-height: 25px;">Limpiar
+                                Filtros</a>
+                        </div>
+                        <div id="totalExpedientes" class="mt-2 fw-bold text-dark">
+                            Total de trámites: <span id="expedienteCount">{{ caso_judiciales|length }}</span>
+                        </div>
+
+                        <!-- Botón para abrir el modal de agregar -->
+                    {% if request.user.role != 1 %}
+                    <center>
+                        <button type="button" class="btn text-white"
+                            style="background-color: #10598A; border: none;"
+                            data-bs-toggle="modal" data-bs-target="#documentModal">
+                            <i class="bi bi-plus-lg"></i> Agregar Nuevo Trámite
+                        </button>
+                    </center>
+                    {% endif %}
+
+                    </div>
+</div>
+
+<div class="container mt-2" style="max-width: 100%;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    
+                    <!-- Tabla -->
+                    <div class="table-container" style="max-height: 65vh; overflow-y: auto; overflow-x: auto;">
+                        <table class="table table-hover table-bordered-gray" id="documentsTable">
+                            <thead>
+                                <tr>
+                                    <th>CÓDIGO</th>
+                                    <th>FECHA</th>
+                                    <th>ÚLTIMA REVISIÓN</th>
+                                    <th>ACTUALIZACIÓN</th>
+                                    <th>TIPO TRÁMITE</th>
+                                    <th>DESTINATARIO</th>
+                                    <th>PARTES INTERVINIENTES</th>
+                                    <th>SUMILLA</th>
+                                    <th class="d-none">RESPONSABLE</th>
+                                    <th>RESPONSABLE</th>
+                                    <th>ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cj in caso_judiciales %}
+                                <tr class="clickable-row"
+                                    data-href="{% url 'tramites:ver_seguimiento_tramite' cj.id %}"
+                                    data-alerta="{{ cj.alerta_color }}">
+                                    <td>{{ cj.kardex|default:'' }}</td>
+                                    <td>{{ cj.fecha|date:"d/m/Y"|default:'' }}</td>
+                                    <td>{{ cj.ult_revision|date:"d/m/Y"|default:'' }}</td>
+                                    <td>{{ cj.pendiente|default:''|safe }}</td>
+                                    <td>{{ cj.tramite_tipo|default:'' }}</td>
+                                    <td>{{ cj.destinatario|default:"" }}</td>
+                                    <td>{{ cj.partes_intervinientes|default:"" }}</td>
+                                    <td>{{ cj.sumilla|default:"" }}</td>
+                                    <td class="d-none">{{ cj.responsable|default:"" }}</td>
+                                    <td>{{ cj.responsable2.first_name|default:"" }}</td>
+
+                                    <td class="action-column text-center align-middle">
+                                        <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap" role="group">
+                                            <button type="button" class="btn btn-sm btn-editar btn-edit"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editCasoJudicialModal" 
+                                                data-id="{{ cj.id }}"
+                                                data-pendiente="{{ cj.pendiente }}"
+                                                data-fecha="{{ cj.fecha|date:'Y-m-d'|default_if_none:'' }}"
+                                                data-partes_intervinientes="{{ cj.partes_intervinientes|default_if_none:'' }}"
+                                                data-tramite_tipo="{{ cj.tramite_tipo|default_if_none:'' }}" 
+                                                data-descripcion="{{ cj.descripcion|default_if_none:'' }}"
+                                                data-sumilla="{{ cj.sumilla|default_if_none:'' }}"
+                                                data-responsable2="{{ cj.responsable2.id|default_if_none:'' }}" 
+                                                data-concluido="{{ cj.concluido|default_if_none:'' }}"
+                                                data-destinatario="{{ cj.destinatario|default_if_none:'' }}">
+                                                <i class="bi bi-pencil-square fs-5"></i>
+                                            </button>
+                                            
+                                            
+                                            <a href="{% url 'tramites:eliminar_tramite' cj.id %}"
+                                                class="btn btn-sm btnEliminar btn-delete"
+                                                title="Eliminar">
+                                                <i class="bi bi-trash fs-5"></i>
+                                            </a>
+                                            
+                                            <!-- Alerta -->
+                                            <a href="#"
+                                                class="btn btn-sm text-white shadow-sm btn-alerta"
+                                                style="background-color: var(--bs-{{ cj.alerta_color }});"
+                                                title="Ver alerta"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#alertaModal111"
+                                                data-fecha-alerta="{% if cj.proxima_alerta %}{{ cj.proxima_alerta|date:'d/m/Y' }}{% else %}Sin alerta{% endif %}"
+                                                data-pendiente="{{ cj.pendiente|striptags|truncatechars:300 }}">
+                                                <i class="bi bi-bell-fill fs-5"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+
+
+                    <!-- Modal para editar trámite -->
+                    <div class="modal fade" id="editCasoJudicialModal" tabindex="-1"
+                        aria-labelledby="editCasoJudicialModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-xl" id="editCasoJudicialDialog">
+                            <div class="modal-content">
+                                <div class="modal-header text-white" id="editCasoJudicialHeader"
+                                    style="background-color: #10598A;">
+                                    <h5 class="modal-title" id="editCasoJudicialModalLabel">Editar Trámite</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <form method="POST" action="{% url 'tramites:editar_tramite' %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" id="edit_id" name="id">
+                                                            <div class="container">
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-4">
+                                                                        <label for="edit_id_fecha" class="form-label">Fecha</label>
+                                                                        <input type="date" class="form-control" id="edit_id_fecha"
+                                                                            name="fecha" readonly>
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                        <label for="edit_id_sumilla_tipo" class="form-label">Tipo de trámite</label>
+                        <input type="text" class="form-control" id="edit_id_sumilla_tipo" name="tramite_tipo" placeholder="Escribe el tipo de trámite">
+                    </div>
+
+
+                                                <div class="col-md-4" id="otros_tramite_container" style="display: none;">
+                                                    <label for="otros_tramite" class="form-label">Especifique el trámite</label>
+                                                    <input type="text" class="form-control" id="otros_tramite" name="otros_tramite">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_sumilla"
+                                                        class="form-label">Sumilla</label>
+                                                    <input type="text" class="form-control" id="edit_id_sumilla"
+                                                        name="sumilla">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_descripcion" class="form-label">Partes intervinientes</label>
+                                                    <input type="text" class="form-control" id="edit_id_partes_intervinientes"
+                                                        name="partes_intervinientes">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_destinatario" class="form-label">Destinatario</label>
+                                                    <input type="text" class="form-control" id="edit_id_destinatario"
+                                                        name="destinatario">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Responsable</label>
+                                                    <select class="form-control" id="edit_responsable2" name="responsable2">
+                                                        {% for user in usuarios_legales %}
+                                                            <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <label for="edit_id_concluido" class="form-label" style="color: #10598A">Estado</label>
+                                                    <select class="form-control" id="edit_concluido" name="concluido">
+                                                        <option value="True">Activo</option>
+                                                        <option value="False">Concluido</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="text-center mt-4">
+                                                <button type="submit" class="btn px-5 py-2 btnGuardar2"
+                                                    style="background-color: #000; color: #fff;">Guardar</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Modal para agregar nueva trámite -->
+                    <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-xl" id="draggableDocumentModal">
+                            <div class="modal-content">
+                                <div class="modal-header text-white"
+                                    id="documentModalHeader"
+                                    style="background-color: #10598A;">
+                                    <h5 class="modal-title" id="documentModalLabel">Agregar Nuevo Trámite</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'tramites:lista_tramite' %}"
+                                        enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="container">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label for="id_codigo" class="form-label">Fecha</label>
+                                                    {{ form.fecha }}
+                                                </div>
+                                                <div class="col-md-4">
+                                <label class="form-label">Tipo de trámite</label>
+                                <div class="input-group">
+                                    {{ form.resolucion_tipo }}
+                                    {{ form.resolucion_texto }}
+                                </div>
+                                {{ form.tramite_tipo }} <!-- campo oculto que se llena con los dos anteriores -->
+                            </div>
+
+                                                <div class="col-md-4">
+                                                    <label for="id_tramite" class="form-label">Sumilla</label>
+                                                    {{ form.sumilla }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_tramite" class="form-label">Partes intervinientes</label>
+                                                    {{ form.partes_intervinientes }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_destinatario" class="form-label">Destinatario</label>
+                                                    {{ form.destinatario }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Responsable</label>
+                                                    {{ form.responsable2 }}
+                                                </div>
+                                            </div>
+                                            <div class="text-center mt-4">
+                                                <button type="submit" class="btn px-5 py-2 btnGuardar"
+                                                    style="background-color: #000; color: white;">Guardar</button>
+
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        
+                        window.addEventListener("pageshow", function (event) {
+                            if (event.persisted) {
+                                window.location.reload();
+                            }
+                        });
+
+                       function makeModalDraggable(modalId, dialogId, headerId) {
+                            const modal = document.getElementById(modalId);
+                            const modalDialog = document.getElementById(dialogId);
+                            const modalHeader = document.getElementById(headerId);
+
+                            let isDragging = false;
+                            let offsetX = 0;
+                            let offsetY = 0;
+
+                            modal.addEventListener('shown.bs.modal', function () {
+                                const rect = modalDialog.getBoundingClientRect();
+                                modalDialog.style.position = 'fixed';
+                                modalDialog.style.top = rect.top + 'px';
+                                modalDialog.style.left = rect.left + 'px';
+                                modalDialog.style.margin = '0';
+                                modalDialog.style.transform = 'none';
+                                modalDialog.style.width = rect.width + 'px';
+                            });
+
+                            modalHeader.addEventListener('mousedown', function (e) {
+                                if (e.target.closest('button')) return;
+                                isDragging = true;
+                                const rect = modalDialog.getBoundingClientRect();
+                                offsetX = e.clientX - rect.left;
+                                offsetY = e.clientY - rect.top;
+                            });
+
+                            document.addEventListener('mousemove', function (e) {
+                                if (isDragging) {
+                                    modalDialog.style.top = `${e.clientY - offsetY}px`;
+                                    modalDialog.style.left = `${e.clientX - offsetX}px`;
+                                }
+                            });
+
+                            document.addEventListener('mouseup', function () {
+                                isDragging = false;
+                            });
+
+                            modal.addEventListener('hidden.bs.modal', function () {
+                                modalDialog.removeAttribute('style');
+                            });
+                        }
+
+                        document.addEventListener("DOMContentLoaded", function () {
+                            // MODALES MOVIBLES
+                            //makeModalDraggable('pdfViewerModal', 'draggableModal', 'pdfModalHeader');
+                            //makeModalDraggable('editSeguimientoModal', 'editDraggableModal', 'editModalHeader');
+                            makeModalDraggable('documentModal', 'draggableDocumentModal', 'documentModalHeader');
+                            makeModalDraggable('editCasoJudicialModal', 'editCasoJudicialDialog', 'editCasoJudicialHeader');
+
+
+                            const table = document.getElementById("documentsTable");
+                            const tbody = table.querySelector("tbody");
+                            const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                            // Función para extraer año y número de código tipo "008-23"
+                            function parseCodigo(codigo) {
+                                const [numStr, yearStr] = codigo.split("-");
+                                const numero = parseInt(numStr, 10);
+                                const anio = parseInt(yearStr, 10);
+                                return { anio, numero };
+                            }
+
+                            rows.sort((a, b) => {
+                                const codigoA = a.children[0].textContent.trim();
+                                const codigoB = b.children[0].textContent.trim();
+
+                                const aParsed = parseCodigo(codigoA);
+                                const bParsed = parseCodigo(codigoB);
+
+                                // Primero ordenar por año, luego por número
+                                if (aParsed.anio !== bParsed.anio) {
+                                    return aParsed.anio - bParsed.anio;
+                                } else {
+                                    return aParsed.numero - bParsed.numero;
+                                }
+                            });
+
+                            // Vacía el tbody y vuelve a agregar las filas ordenadas
+                            tbody.innerHTML = "";
+                            rows.forEach(row => tbody.appendChild(row));
+                        });
+
+                        document.addEventListener('DOMContentLoaded', function () {
+
+                            const rows = document.querySelectorAll(".clickable-row");
+
+        rows.forEach(row => {
+            row.addEventListener("click", function (e) {
+                // Evita que haga redirect si se hace clic en un botón o enlace dentro de la fila
+                if (e.target.closest(".action-column") || e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('.btn-group')) {
+                    return;
+                }
+                const url = this.dataset.href;
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+
+
+    // FILTRO EN TIEMPO REAL
+    document.querySelectorAll('.filter-input').forEach(input => {
+        input.addEventListener('input', filtrarTabla);
+    });
+
+ function filtrarTabla() {
+    const filtros = {};
+
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const columna = input.dataset.column;
+        const valor = input.value.trim().toLowerCase();
+        if (valor) {
+            filtros[columna] = valor;
+        }
+    });
+
+
+    document.querySelectorAll('#documentsTable tbody tr').forEach(fila => {
+        let mostrar = true;
+
+        // Filtrado por columnas (texto)
+        for (const columna in filtros) {
+            if (columna === "alerta") continue; // saltamos el filtro de alerta por ahora
+            const celda = fila.cells[parseInt(columna)];
+            if (celda) {
+                const textoCelda = celda.textContent.trim().toLowerCase();
+                if (!textoCelda.includes(filtros[columna])) {
+                    mostrar = false;
+                    break;
+                }
+            }
+        }
+
+        // Filtro especial por color de alerta
+        if (mostrar && filtros["alerta"]) {
+            const colorFila = fila.dataset.alerta ? fila.dataset.alerta.toLowerCase() : "";
+            if (colorFila !== filtros["alerta"]) {
+                mostrar = false;
+            }
+        }
+        fila.style.display = mostrar ? '' : 'none';
+    });
+}
+
+    // EDITAR REGISTRO
+    const editButtons = document.querySelectorAll('.btn-editar');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault(); // Si el botón es un enlace, previene la redirección automática
+
+            const codigo = button.getAttribute('data-fecha');
+            const partida = button.getAttribute('data-partida');
+            const id = button.getAttribute('data-id');
+
+            console.log("Código:", codigo);
+            console.log("Partida:", partida);
+            console.log("Id:", id);
+
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_id_fecha').value = codigo;
+            document.getElementById('edit_id_sumilla').value = button.getAttribute('data-sumilla');
+            document.getElementById('edit_id_partes_intervinientes').value = button.getAttribute('data-partes_intervinientes');
+            document.getElementById('edit_id_sumilla_tipo').value = button.getAttribute('data-tramite_tipo');
+            document.getElementById('edit_responsable2').value = button.getAttribute('data-responsable2');
+            document.getElementById('edit_concluido').value = button.getAttribute('data-concluido');
+            console.log("RESPONSABLE:");
+            console.log(button.getAttribute('data-responsable2'));
+            
+            document.getElementById('edit_id_destinatario').value = button.getAttribute('data-destinatario');
+
+            const observacionHtml2 = button.getAttribute('data-pendiente');
+            if (CKEDITOR.instances['edit_id_pendiente']) {
+                    CKEDITOR.instances['edit_id_pendiente'].setData(observacionHtml2 || '');
+                }
+        });
+    });
+
+});
+
+
+                        (function () {
+                            const botonesGuardar = document.querySelectorAll('.btnGuardar');
+                            botonesGuardar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Detiene envío por defecto
+
+                                    const form = this.closest('form');
+                                    const campos = form.querySelectorAll("input, select, textarea");
+                                    let formValido = true;
+
+                                    campos.forEach(campo => {
+                                        if (
+                                            campo.offsetParent !== null && // Solo visibles
+                                            campo.hasAttribute("required") && 
+                                            !campo.value.trim()
+                                        ) {
+                                            formValido = false;
+                                        }
+                                    });
+
+                                    if (!formValido) {
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: 'Campos incompletos',
+                                            text: 'Por favor completa todos los campos obligatorios.',
+                                            confirmButtonText: 'Entendido',
+                                            confirmButtonColor: '#10598A',
+                                        });
+                                        return; // Evita que siga
+                                    }
+
+                                    // Si está todo completo
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: "top-end",
+                                        showConfirmButton: false,
+                                        timer: 1000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.onmouseenter = Swal.stopTimer;
+                                            toast.onmouseleave = Swal.resumeTimer;
+                                        }
+                                    });
+
+                                    Toast.fire({
+                                        icon: "success",
+                                        title: "Registro guardado correctamente"
+                                    }).then(() => {
+                                        form.submit(); // Recién aquí se envía
+                                    });
+                                });
+                            });
+                        })();
+
+
+                        // BTN ACTUALIZAR
+                        (function () {
+                            const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+                            botonesGuardar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Previene el submit inmediato
+
+                                    const form = this.closest('form');
+
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: "top-end",
+                                        showConfirmButton: false,
+                                        timer: 1000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.onmouseenter = Swal.stopTimer;
+                                            toast.onmouseleave = Swal.resumeTimer;
+                                        }
+                                    });
+
+                                    Toast.fire({
+                                        icon: "success",
+                                        title: "Registro actualizado correctamente"
+                                    }).then(() => {
+                                        form.submit(); // Enviar el formulario después del toast
+                                    });
+                                });
+                            });
+                        })();
+
+                        // BTN ELIMINAR
+                        (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Evita que el enlace se siga inmediatamente
+
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10598A',
+                    cancelButtonColor: '#000000',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirige al href del botón
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const table = document.getElementById("documentsTable");
+        const countSpan = document.getElementById("expedienteCount");
+
+        function updateCount() {
+            // Contar solo las filas visibles (que no estén ocultas por filtros)
+            const visibleRows = Array.from(table.querySelectorAll("tbody tr"))
+                .filter(row => row.style.display !== "none");
+            countSpan.textContent = visibleRows.length;
+        }
+
+        updateCount(); // Mostrar al cargar
+
+        // Si usas inputs con clase .filter-input para filtrar, actualiza también el contador
+        document.querySelectorAll(".filter-input").forEach(input => {
+            input.addEventListener("input", updateCount);
+        });
+    });
+
+    
+                    </script>
+
+{% endblock %}

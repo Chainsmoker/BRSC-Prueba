@@ -1,0 +1,798 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Seguimiento Expediente Concluido {% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'control_expediente/css/control_expediente_modern.css' %}" rel="stylesheet">
+<style>
+    .gastos-contenido {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition: max-height 0.4s ease, opacity 0.4s ease;
+    }
+
+    .gastos-contenido.abierto {
+        max-height: 1000px;
+        opacity: 1;
+    }
+
+    .fila-seleccionada {
+        background-color: #d8dee9 !important;
+    }
+
+    .fila-inter {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-10 position-relative">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white text-center">
+                    <h5 class="mb-0">Seguimiento del Expediente Concluido</h5>
+                </div>
+                <div class="card-body bg-light">
+                    <h5 class="text-center mb-3 fw-bold">{{ caso }}</h5>
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>MATERIA:</strong> {{ caso.materia|default_if_none:'' }}</div>
+                        <div class="col-md-6"><strong>ESPECIALIDAD:</strong> {{ caso.especialidad|default_if_none:'' }}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>JUZGADO:</strong> {{ caso.juzgado|default_if_none:'' }}</div>
+                        <div class="col-md-6"><strong>SEDE:</strong> {{ caso.sede|default_if_none:'' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6"><strong>DEMANDANTE:</strong> {{ caso.demandante|default_if_none:'' }}
+                        </div>
+                        <div class="col-md-6"><strong>DEMANDADO:</strong> {{ caso.demandado|default_if_none:'' }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="position-absolute top-50 start-100 translate-middle-y ms-4 d-none d-xl-block">
+                <h1 class="display-4 fw-bold text-secondary text-nowrap">{{ caso.codigo }}</h1>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.role != 1 %}
+    <div class="text-center mb-4">
+        <button type="button" class="btn btn-secondary mx-2" data-bs-toggle="modal"
+            data-bs-target="#documentModalGastoExcel">
+            <i class="bi bi-cash-coin me-2"></i>Visualizar Gastos
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="card shadow-lg">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 80vh;">
+                <table class="table table-modern table-hover mb-0" id="seguimientosTable">
+                    <thead class="sticky-top">
+                        <tr>
+                            <th class="text-nowrap" style="width: 5%;">Descripción</th>
+                            <th>Fecha Presentación</th>
+                            <th>Sumilla</th>
+                            <th>Pendiente</th>
+                            <th>Casilla</th>
+                            <th>Estado</th>
+                            <th>Sustento</th>
+                            <th>Fecha Notificación</th>
+                            <th class="text-nowrap">Última Edición</th>
+                            <th>Autor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for seguimiento in seguimientos %}
+                        <tr class="toggle-gastos-btn {% if 'Escrito' in seguimiento.resolucion %}table-active fw-bold{% endif %}"
+                            data-target="gastos-{{ forloop.counter }}" {% if seguimiento.inter %}data-inter="true" {%
+                            endif %}>
+                            <td class="text-nowrap">{{ seguimiento.resolucion|default:"" }}</td>
+                            <td class="text-nowrap">{{ seguimiento.fecha_seguimiento|date:"d/m/Y" }}</td>
+                            <td>{{ seguimiento.seguimiento|safe }}</td>
+                            <td>{{ seguimiento.pendiente|default:""|safe }}</td>
+                            <td>{{ seguimiento.responsable|default:"" }}</td>
+                            <td><span class="badge bg-secondary">{{ seguimiento.estado }}</span></td>
+                            <td class="text-center">
+                                {% if seguimiento.pdf %}
+                                <button type="button"
+                                    class="btn btn-link text-secondary p-0 text-decoration-none ver-pdf-btn {% if seguimiento.inter %}fila-inter{% endif %}"
+                                    data-bs-toggle="modal" data-bs-target="#pdfViewerModal"
+                                    data-pdf-url="{{ seguimiento.pdf.url }}">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF <i class="bi bi-check-lg"></i>
+                                </button>
+                                {% else %}
+                                <span class="text-muted"><i class="bi bi-file-earmark-pdf-fill"></i> PDF <i
+                                        class="bi bi-x-lg"></i></span>
+                                {% endif %}
+                            </td>
+                            <td>{{ seguimiento.fecha_pendiente|date:"d/m/Y" }}</td>
+                            <td>{{ seguimiento.fecha_registro|date:"d/m/Y h:i A" }}</td>
+                            <td>{{ seguimiento.editor|default:"" }}</td>
+                        </tr>
+                        <tr id="gastos-{{ forloop.counter }}" class="gastos-lista table-light">
+                            <td colspan="10" class="p-0 border-0">
+                                <div class="gastos-contenido p-3">
+                                    <table class="table table-sm table-bordered bg-white mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Código</th>
+                                                <th>Concepto</th>
+                                                <th>Gasto Soles</th>
+                                                <th>Gasto Dólares</th>
+                                                <th>PDF (Sustento)</th>
+                                                <th>Última edición</th>
+                                                <th>Autor</th>
+                                                {% if request.user.role != 1 %}
+                                                <th class="d-none">Acciones</th>
+                                                {% endif %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for gasto in seguimiento.gastos.all %}
+                                            <tr>
+                                                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                                                <td>{{ gasto.codigo_pago|default_if_none:"" }}</td>
+                                                <td>{{ gasto.detalle }}</td>
+                                                <td>{{ gasto.gastos_soles }}</td>
+                                                <td>{{ gasto.gastos_dolares|default:"" }}</td>
+                                                <td>
+                                                    {% if gasto.pdf %}
+                                                    <button type="button"
+                                                        class="btn btn-link btn-sm text-decoration-none ver-pdf-btn text-secondary"
+                                                        data-bs-toggle="modal" data-bs-target="#pdfViewerModal"
+                                                        data-pdf-url="{{ gasto.pdf.url }}">
+                                                        Ver PDF
+                                                    </button>
+                                                    {% else %}
+                                                    <span class="text-muted small">No disponible</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ gasto.fecha_registro|date:"d/m/Y h:i A" }}</td>
+                                                <td>{{ gasto.editor|default_if_none:"" }}</td>
+                                                {% if request.user.role != 1 %}
+                                                <td class="d-none">
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-dark btn-editar-gasto"
+                                                            data-bs-toggle="modal" data-bs-target="#editGastoModal"
+                                                            data-id_gasto="{{ gasto.id }}"
+                                                            data-codigo_pago="{{ gasto.codigo_pago|default_if_none:'' }}"
+                                                            data-detalle="{{ gasto.detalle|default_if_none:'' }}"
+                                                            data-gastos_soles="{{ gasto.gastos_soles|default_if_none:'' }}"
+                                                            data-gastos_dolares="{{ gasto.gastos_dolares|default_if_none:'' }}"
+                                                            data-pdf="{{ gasto.pdf }}"
+                                                            data-fecha="{{ gasto.fecha|date:'Y-m-d' }}">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                        <form method="POST"
+                                                            action="{% url 'control_expediente:eliminar_gasto' %}"
+                                                            class="d-inline form-eliminar-gasto">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="gasto_id" value="{{ gasto.id }}">
+                                                            <button type="submit"
+                                                                class="btn btn-sm btn-outline-danger btnEliminarg"
+                                                                title="Eliminar">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                                {% endif %}
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="8" class="text-center text-muted">Sin gastos registrados.
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td colspan="7" class="text-end">Gasto General:</td>
+                            <td>(S/) {{ total_soles }}</td>
+                            <td>($) {{ total_dolares }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editGastoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" id="editGastoDraggableModal">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Editar Gasto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'control_expediente:editar_gasto' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id_gasto" name="id">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="edit_id_fecha" name="fecha">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Código</label>
+                            <input type="text" class="form-control" id="edit_id_codigo_pago" name="codigo_pago">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Concepto</label>
+                            <input type="text" class="form-control" id="edit_id_detalle" name="detalle">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gasto Soles</label>
+                            <input type="text" class="form-control" id="edit_gastos_soles" name="gastos_soles">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gasto dólares</label>
+                            <input type="number" class="form-control" id="edit_gastos_dolares" name="gastos_dolares">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Archivo PDF</label>
+                            <input type="file" class="form-control" id="edit_id_pdf" name="pdf">
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-secondary px-5 btnGuardar2">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl" id="draggableModal">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0" id="pdfModalHeader" style="cursor: move;">
+                <h5 class="modal-title text-white">Visualizar documento PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0" style="height: 80vh;">
+                <iframe id="pdfIframe" src="" width="100%" height="100%" style="border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="documentModalGasto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Agregar Nuevo Gasto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'control_expediente:ver_seguimiento' caso.id %}"
+                    enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="seguimiento_id" id="input-seguimiento-id" value="">
+                    <input type="hidden" name="tipo_formulario" value="gasto">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha</label>
+                            {{ form2.fecha }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Código pago</label>
+                            {{ form2.codigo_pago }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Concepto</label>
+                            {{ form2.detalle }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gasto Soles</label>
+                            {{ form2.gastos_soles }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gasto Dólares</label>
+                            {{ form2.gastos_dolares }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Archivo PDF</label>
+                            {{ form2.pdf }}
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-secondary px-5 btnGuardar">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="documentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="documentDraggableModal">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Agregar Nuevo Seguimiento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'control_expediente:ver_seguimiento' caso.id %}"
+                    enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.media }}
+                    <div class="row g-4">
+                        <div class="col-md-4 d-flex flex-column gap-2">
+                            <div>
+                                <label class="form-label">Fecha Presentación</label>
+                                {{ form.fecha_seguimiento }}
+                            </div>
+                            <div>
+                                <label class="form-label">Descripción</label>
+                                <div class="input-group">
+                                    {{ form.resolucion_tipo }}
+                                    {{ form.resolucion_texto }}
+                                </div>
+                                {{ form.resolucion }}
+                            </div>
+                            <div>
+                                <label class="form-label">Casilla</label>
+                                {{ form.responsable }}
+                            </div>
+                            <div>
+                                <label class="form-label">Estado</label>
+                                {{ form.estado }}
+                            </div>
+                            <div>
+                                <label class="form-label">Fecha Notificación</label>
+                                {{ form.fecha_pendiente }}
+                            </div>
+                            <div>
+                                <label class="form-label">Crear alerta</label>
+                                {{ form.fecha_alerta }}
+                            </div>
+                            <div>
+                                <label class="form-label">PDF</label>
+                                {{ form.pdf }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sumilla</label>
+                            {{ form.seguimiento }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Pendiente</label>
+                            {{ form.pendiente }}
+                        </div>
+                    </div>
+                    <div class="d-none">
+                        {{ form.inter }}
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-secondary px-5 btnGuardar">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="documentModalGastoExcel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="documentDraggableModalGastoExcel">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white sticky-top">
+                <h5 class="modal-title">Gastos del Expediente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+                {% if primera_fecha_gasto %}
+                <div class="alert alert-warning d-flex align-items-center py-2 px-3 mb-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <span>Los gastos registrados se consideran a partir de <strong>{{ primera_fecha_gasto|date:"d/m/Y"
+                            }}</strong>, fecha correspondiente al primer gasto registrado.</span>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold text-secondary">TOTAL (S/): <strong class="text-dark">{{ total_soles
+                                }}</strong></span>
+                        <span class="fw-bold text-secondary">TOTAL ($): <strong class="text-dark">{{ total_dolares
+                                }}</strong></span>
+                    </div>
+                    <a href="{% url 'control_expediente:exportar_gastos_excel' caso.id %}"
+                        class="btn btn-success btn-sm">
+                        <i class="bi bi-file-earmark-excel me-2"></i>Exportar archivo Excel
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle text-center">
+                        <thead class="table-dark sticky-top">
+                            <tr>
+                                <th>EXPEDIENTE</th>
+                                <th>FECHA</th>
+                                <th>DESCRIPCIÓN</th>
+                                <th>DETALLE</th>
+                                <th>CÓDIGO DE PAGO</th>
+                                <th>GASTO (S/)</th>
+                                <th>GASTO ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gasto in gastos_expediente %}
+                            <tr>
+                                <td>{{ gasto.expediente }}</td>
+                                <td>{{ gasto.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ gasto.resolucion|default_if_none:'' }}</td>
+                                <td>{{ gasto.detalle|default_if_none:'' }}</td>
+                                <td>{{ gasto.codigo_pago|default_if_none:'' }}</td>
+                                <td>{{ gasto.gastos_soles|default_if_none:'0.0' }}</td>
+                                <td>{{ gasto.gastos_dolares|default_if_none:'0.0' }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-muted">No hay gastos registrados.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editSeguimientoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="editDraggableModal">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">Editar Seguimiento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'control_expediente:editar_seguimiento' %}"
+                    enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <div class="row g-4">
+                        <div class="col-md-4 d-flex flex-column gap-2">
+                            <div>
+                                <label class="form-label">Fecha Presentación</label>
+                                <input type="date" class="form-control" id="edit_id_fecha_seguimiento"
+                                    name="fecha_seguimiento">
+                            </div>
+                            <div>
+                                <label class="form-label">Descripción</label>
+                                <input type="text" class="form-control" id="edit_id_resolucion" name="resolucion">
+                            </div>
+                            <div>
+                                <label class="form-label">Casilla</label>
+                                <input type="text" class="form-control" id="edit_id_responsable" name="responsable">
+                            </div>
+                            <div>
+                                <label class="form-label">Estado</label>
+                                <select class="form-control" id="edit_id_estado" name="estado">
+                                    <option value="En proceso">En Proceso</option>
+                                    <option value="Finalizado">Finalizado</option>
+                                    <option value="Presentado">Presentado</option>
+                                    <option value="Notificado">Notificado</option>
+                                    <option value="Otros">Otros</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Fecha Notificación</label>
+                                <input type="date" class="form-control" id="edit_id_fecha_pendiente"
+                                    name="fecha_pendiente">
+                            </div>
+                            <div>
+                                <label class="form-label">Fecha Alerta</label>
+                                <input type="date" class="form-control" id="edit_fecha_alerta" name="fecha_alerta">
+                            </div>
+                            <div>
+                                <label class="form-label">Documento PDF</label>
+                                <input type="file" class="form-control" id="edit_id_pdf" name="pdf">
+                                <div id="edit_pdf_actual" class="mt-2" style="display: none;">
+                                    <a href="#" id="edit_pdf_link" target="_blank">Ver archivo actual</a>
+                                    <button type="button" class="btn btn-sm btn-danger ms-2"
+                                        id="btnEliminarPdf">Eliminar PDF</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sumilla</label>
+                            <textarea class="form-control ckeditor" id="edit_id_seguimiento" name="seguimiento"
+                                style="height: 250px;"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Pendiente</label>
+                            <textarea class="form-control ckeditor" id="edit_id_pendiente" name="pendiente"
+                                style="height: 250px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-secondary px-5 btnGuardar2">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function initCKEditor(id) {
+        if (CKEDITOR.instances[id]) {
+            CKEDITOR.instances[id].destroy(true);
+        }
+        CKEDITOR.replace(id, {
+            height: '250px',
+            toolbar: [
+                { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+                { name: 'colors', items: ['TextColor', 'BGColor'] },
+                { name: 'paragraph', items: ['NumberedList', 'BulletedList'] }
+            ]
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initCKEditor('edit_id_seguimiento');
+        initCKEditor('edit_id_pendiente');
+    });
+
+    function makeModalDraggable(modalId, dialogId, headerId) {
+        const modal = document.getElementById(modalId);
+        const modalDialog = document.getElementById(dialogId);
+        const modalHeader = document.getElementById(headerId);
+
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        modal.addEventListener('shown.bs.modal', function () {
+            const rect = modalDialog.getBoundingClientRect();
+            modalDialog.style.position = 'fixed';
+            modalDialog.style.top = rect.top + 'px';
+            modalDialog.style.left = rect.left + 'px';
+            modalDialog.style.margin = '0';
+            modalDialog.style.transform = 'none';
+            modalDialog.style.width = rect.width + 'px';
+        });
+
+        modalHeader.addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            const rect = modalDialog.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                modalDialog.style.top = `${e.clientY - offsetY}px`;
+                modalDialog.style.left = `${e.clientX - offsetX}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            modalDialog.removeAttribute('style');
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        makeModalDraggable('editGastoModal', 'editGastoDraggableModal', 'editGastoModalHeader');
+        makeModalDraggable('documentModal', 'documentDraggableModal', 'documentModalHeader');
+        makeModalDraggable('documentModalGastoExcel', 'documentDraggableModalGastoExcel', 'documentModalHeaderGastoExcel');
+        makeModalDraggable('editSeguimientoModal', 'editDraggableModal', 'editModalHeader');
+
+        const modal = document.getElementById('pdfViewerModal');
+        const modalDialog = document.getElementById('draggableModal');
+        const modalHeader = document.getElementById('pdfModalHeader');
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        modal.addEventListener('shown.bs.modal', function () {
+            const rect = modalDialog.getBoundingClientRect();
+            modalDialog.style.position = 'fixed';
+            modalDialog.style.top = rect.top + 'px';
+            modalDialog.style.left = rect.left + 'px';
+            modalDialog.style.margin = '0';
+            modalDialog.style.transform = 'none';
+            modalDialog.style.width = rect.width + 'px';
+        });
+
+        modalHeader.addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            const rect = modalDialog.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                modalDialog.style.top = `${e.clientY - offsetY}px`;
+                modalDialog.style.left = `${e.clientX - offsetX}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            modalDialog.removeAttribute('style');
+        });
+    });
+
+    (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#BF0909',
+                    cancelButtonColor: '#6F6F6F',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminarg');
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#BF0909',
+                    cancelButtonColor: '#6F6F6F',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    })();
+
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar, .btnGuardar2');
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro guardado correctamente"
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    })();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputSeguimientoId = document.getElementById('input-seguimiento-id');
+        document.querySelectorAll('.abrir-modal-gasto').forEach(button => {
+            button.addEventListener('click', function () {
+                const seguimientoId = this.getAttribute('data-seguimiento-id');
+                if (inputSeguimientoId) {
+                    inputSeguimientoId.value = seguimientoId;
+                }
+            });
+        });
+
+        const pdfModal = document.getElementById('pdfViewerModal');
+        const iframe = document.getElementById('pdfIframe');
+        pdfModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const pdfUrl = button.getAttribute('data-pdf-url');
+            iframe.src = pdfUrl;
+        });
+        pdfModal.addEventListener('hidden.bs.modal', function () {
+            iframe.src = '';
+        });
+
+        const editButtons = document.querySelectorAll('.btn-editar, .btn-editar-gasto');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                if (button.classList.contains('btn-editar')) {
+                    document.getElementById('edit_id').value = button.getAttribute('data-id');
+                    document.getElementById('edit_id_resolucion').value = button.getAttribute('data-resolucion');
+                    //document.getElementById('edit_id_seguimiento').value = button.getAttribute('data-seguimiento');
+                    const observacionHtml = button.getAttribute('data-seguimiento');
+                    initCKEditor('edit_id_seguimiento');
+                    CKEDITOR.instances['edit_id_seguimiento'].setData(observacionHtml || '');
+
+                    //document.getElementById('edit_id_pendiente').value = button.getAttribute('data-pendiente');
+                    const observacionHtml2 = button.getAttribute('data-pendiente');
+                    initCKEditor('edit_id_pendiente');
+                    CKEDITOR.instances['edit_id_pendiente'].setData(observacionHtml2 || '');
+
+                    document.getElementById('edit_id_responsable').value = button.getAttribute('data-responsable');
+                    document.getElementById('edit_id_estado').value = button.getAttribute('data-estado');
+                    document.getElementById('edit_id_fecha_seguimiento').value = button.getAttribute('data-fecha_seguimiento');
+                    document.getElementById('edit_id_fecha_pendiente').value = button.getAttribute('data-fecha_pendiente');
+                    document.getElementById('edit_fecha_alerta').value = button.getAttribute('data-fecha_alerta');
+                } else {
+                    document.getElementById('edit_id_codigo_pago').value = button.getAttribute('data-codigo_pago');
+                    document.getElementById('edit_id_gasto').value = button.getAttribute('data-id_gasto');
+                    document.getElementById('edit_id_fecha').value = button.getAttribute('data-fecha');
+                    document.getElementById('edit_id_detalle').value = button.getAttribute('data-detalle');
+                    document.getElementById('edit_gastos_soles').value = button.getAttribute('data-gastos_soles');
+                    document.getElementById('edit_gastos_dolares').value = button.getAttribute('data-gastos_dolares');
+                    document.getElementById('edit_id_pdf').value = button.getAttribute('data-pdf');
+                }
+            });
+        });
+
+        document.querySelectorAll('.toggle-gastos-btn').forEach(row => {
+            row.addEventListener('click', function (e) {
+                if (row.dataset.inter === 'true' || e.target.closest('td.acciones') || e.target.closest('.ver-pdf-btn')) {
+                    return;
+                }
+                const targetId = row.getAttribute('data-target');
+                const gastosRow = document.getElementById(targetId);
+                const contenido = gastosRow.querySelector('.gastos-contenido');
+                if (contenido.classList.contains('abierto')) {
+                    contenido.classList.remove('abierto');
+                } else {
+                    document.querySelectorAll('.gastos-contenido.abierto').forEach(c => c.classList.remove('abierto'));
+                    contenido.classList.add('abierto');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

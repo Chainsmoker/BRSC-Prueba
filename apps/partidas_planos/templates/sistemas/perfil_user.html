@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mi Perfil - Bienes Raíces Santa Clara{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        padding: 40px 0;
+        min-height: 100vh;
+    }
+    
+    .profile-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-top: 80px;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+        position: relative;
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h100v100H0z" fill="none"/><path d="M0 50h100M50 0v100" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .profile-header h2 {
+        color: white;
+        font-size: 2rem;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .profile-header .icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #d4af37;
+    }
+    
+    .profile-photo-section {
+        padding: 40px;
+        background: linear-gradient(to bottom, #f8f9fa 0%, white 50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+    }
+    
+    .photo-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .profile-photo {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-photo:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    }
+    
+    .photo-badge {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #d4af37 0%, #f4c430 100%);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .photo-upload-btn {
+        background: white;
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        max-width: 400px;
+        width: 100%;
+    }
+    
+    .photo-upload-btn:hover {
+        border-color: var(--accent-color);
+        background: #fffef8;
+    }
+    
+    .photo-upload-btn i {
+        font-size: 2rem;
+        color: var(--accent-color);
+        display: block;
+        margin-bottom: 10px;
+    }
+    
+    .form-section {
+        padding: 40px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-group i {
+        position: absolute;
+        left: 16px;
+        top: 45px;
+        color: var(--accent-color);
+        font-size: 1.1rem;
+    }
+    
+    .form-group .form-control,
+    .form-group .form-select {
+        padding-left: 45px;
+    }
+    
+    .save-button {
+        background: linear-gradient(135deg, #d4af37 0%, #f4c430 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .save-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
+        background: linear-gradient(135deg, #f4c430 0%, #d4af37 100%);
+    }
+    
+    .save-button i {
+        font-size: 1.2rem;
+    }
+    
+    .info-badge {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border-left: 4px solid var(--accent-color);
+    }
+    
+    .info-badge i {
+        color: var(--accent-color);
+        margin-right: 10px;
+    }
+    
+    /* Hide default file input */
+    input[type="file"] {
+        display: none;
+    }
+    
+    .file-input-label {
+        cursor: pointer;
+        display: block;
+        width: 100%;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 20px 0;
+        }
+        
+        .profile-card {
+            margin-top: 60px;
+        }
+        
+        .profile-header {
+            padding: 30px 20px;
+        }
+        
+        .profile-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .profile-photo-section,
+        .form-section {
+            padding: 25px 20px;
+        }
+        
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="profile-container">
+    <div class="container">
+        <div class="profile-card fade-in-up">
+            <!-- Header -->
+            <div class="profile-header">
+                <i class="bi bi-building icon"></i>
+                <h2>Mi Perfil Profesional</h2>
+                <p class="mb-0 mt-2" style="opacity: 0.9;">Bienes Raíces Santa Clara SAC</p>
+            </div>
+            
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Foto de perfil -->
+                <div class="profile-photo-section">
+                    <div class="photo-wrapper">
+                        {% if user.foto_perfil %}
+                            <img src="{{ user.foto_perfil.url }}" alt="Foto de perfil" class="profile-photo">
+                        {% else %}
+                            <img src="{% static 'images/login.png' %}" alt="Foto por defecto" class="profile-photo">
+                        {% endif %}
+                        <div class="photo-badge">
+                            <i class="bi bi-camera"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="photo-upload-btn">
+                        <label for="id_foto_perfil" class="file-input-label">
+                            <i class="bi bi-cloud-upload"></i>
+                            <strong>Cambiar foto de perfil</strong>
+                            <p class="text-muted mb-0 mt-1" style="font-size: 0.85rem;">JPG, PNG o GIF (máx. 5MB)</p>
+                        </label>
+                        {{ form.foto_perfil }}
+                    </div>
+                </div>
+                
+                <!-- Campos del formulario -->
+                <div class="form-section">
+                    <div class="info-badge">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <strong>Información Personal</strong> - Mantén tus datos actualizados para una mejor experiencia
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label"><i class="bi bi-person"></i> Nombre</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="bi bi-person-badge"></i> Apellido</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label"><i class="bi bi-envelope"></i> Correo Electrónico</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="bi bi-telephone"></i> Teléfono</label>
+                            {{ form.phone_number }}
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label"><i class="bi bi-card-text"></i> DNI</label>
+                            {{ form.dni }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label"><i class="bi bi-briefcase"></i> Área</label>
+                            {{ form.role }}
+                        </div>
+                    </div>
+                    
+                    <!-- Botón de guardar -->
+                    <div class="text-center mt-4 pt-3">
+                        <button type="submit" class="save-button">
+                            <i class="bi bi-check-circle"></i>
+                            <span>Guardar Cambios</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ocultar elementos innecesarios del input file de Django
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+        // Ocultar el label y checkbox de "clear" de Django
+        const parent = fileInput.parentElement;
+        if (parent) {
+            const links = parent.querySelectorAll('a');
+            const checkboxes = parent.querySelectorAll('input[type="checkbox"]');
+            const labels = parent.querySelectorAll('label:not(.file-input-label)');
+            
+            links.forEach(el => el.style.display = 'none');
+            checkboxes.forEach(el => el.style.display = 'none');
+            labels.forEach(el => el.style.display = 'none');
+            
+            // Ocultar textos "Currently:" y "Change:"
+            parent.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    node.textContent = '';
+                }
+            });
+        }
+        
+        // Preview de imagen al seleccionar
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.querySelector('.profile-photo').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Animación de entrada
+    const card = document.querySelector('.profile-card');
+    if (card) {
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

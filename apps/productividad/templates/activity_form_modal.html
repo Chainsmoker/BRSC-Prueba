@@ -1,0 +1,31 @@
+<h5 class="mb-3">Actividades del {{ date }}</h5>
+
+{% if activities %}
+    <ul class="list-group mb-3">
+        {% for a in activities %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ a.title }}</span>
+                <span>{{ a.description|safe }}</span>
+
+                <button type="button"
+                    class="btn btn-sm btn-outline-primary edit-btn d-none"
+                    data-id="{{ a.id }}">
+                    Editar
+                </button>
+
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-muted">No hay actividades registradas para este día.</p>
+{% endif %}
+
+<hr>
+
+<h5>Nueva actividad</h5>
+
+<form id="activityForm">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-dark w-100">Guardar</button>
+</form>

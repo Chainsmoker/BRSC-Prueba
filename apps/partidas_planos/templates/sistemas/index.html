@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Sistemas {% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<style>
+    .form-control {
+        border-radius: 0.5rem;
+        height: 38px;
+    }
+
+    label.form-label {
+        font-weight: 500;
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #d8dee9 !important;
+        box-shadow: 0 0 0 0.2rem rgb(226, 242, 242);
+    }
+
+    .ver-pdf-btn:hover {
+        text-decoration: underline !important;
+    }
+
+    .fila-seleccionada {
+        background-color: #d8dee9 !important;
+    }
+
+    .section-title {
+        font-weight: bold;
+        font-size: 18px;
+        color: #2e3440;
+        margin-bottom: 10px;
+    }
+
+    .card {
+        border-radius: 1rem;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Enlaces generales dentro de las tarjetas */
+    .card a {
+        text-decoration: none;
+        /* Quita el subrayado */
+        color: inherit;
+        /* Mantiene el color del texto normal */
+        font-weight: normal;
+        /* Texto normal */
+        transition: all 0.2s ease;
+    }
+
+    .card a:hover {
+        color: #8b0000;
+        /* Rojo oscuro */
+        font-weight: bold;
+        /* Negrita */
+        text-decoration: underline;
+        /* Subrayado al pasar el mouse */
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-center fw-bold mb-6" style="color:#3b4252; ; margin-bottom: 200px;">
+        Tecnología de la Información
+    </h2>
+
+    <div class="row g-4">
+        <!-- Sistema Documental Interno -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Sistema Documental Interno (SDI)</h5>
+                <ul class="list-unstyled ms-2">
+                    <li>
+                        📄 <a href="{% static 'docs/asd.pdf' %}" target="_blank">
+                            Manual de usuario
+                        </a>
+                    </li>
+                    <li>
+                        🌐 <a href="http://192.168.18.51/" target="_blank">
+                            Enlace de la aplicación
+                        </a>
+                    </li>
+                    <li>
+                        🔗 <a href="https://github.com/santa-clara-sac/SDI" target="_blank">
+                            Código fuente
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Plataforma Web -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Plataforma Web</h5>
+                <ul class="list-unstyled ms-2">
+                    <li>
+                        📄 <a href="{% static 'docs/asd.pdf' %}" target="_blank">
+                            Manual de usuario
+                        </a>
+                    </li>
+                    <li>
+                        🌐 <a href="https://brsantaclara.com/" target="_blank">
+                            Enlace de la aplicación
+                        </a>
+                    </li>
+                    <li>
+                        🔗 <a href="https://github.com/surcodev/plataforma-web-brsc" target="_blank">
+                            Código fuente
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Migración de la información a la nube -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Migración a la nube</h5>
+                <ul class="list-unstyled ms-2">
+                    <li>
+                        📄 <a href="{% static 'docs/drive.pdf' %}" target="_blank">
+                            Documentación técnica
+                        </a>
+                    </li>
+                    <li>
+                        🌐 <a href="https://drive.google.com" target="_blank">
+                            Enlace Google Drive
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Optimización SEO</h5>
+                <ul class="list-unstyled ms-2">
+                    <li>
+                        📄 <a href="{% static 'docs/seo.pdf' %}" target="_blank">
+                            Documentación técnica
+                        </a>
+                    </li>
+                    <li>
+                        ▶️ <a href="https://www.youtube.com/@BienesRaicesSantaclara" target="_blank">
+                            YouTube
+                        </a>
+                    </li>
+                    <li>
+                        🔗 <a href="https://linkedin.com/company/bienes-raices-santa-clara-s-a-c/" target="_blank">
+                            LinkedIn
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Servidor casero -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Servidor Local</h5>
+                <ul class="list-unstyled ms-2">
+                    <li>
+                        📄 <a href="{% static 'docs/servidor_local.pdf' %}" target="_blank">
+                            Documentación técnica
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Machine Learning -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Machine Learning</h5>
+                <ul class="list-unstyled ms-2">
+                    <li>
+                        📄 <a href="{% static 'docs/asd.pdf' %}" target="_blank">
+                            Documentación técnica
+                        </a>
+                    </li>
+                    <li>
+                        🌐 <a href="https://brsantaclara.com/" target="_blank">
+                            Enlace de la aplicación
+                        </a>
+                    </li>
+                    <li>
+                        🔗 <a href="https://github.com/surcodev/plataforma-web-brsc" target="_blank">
+                            Código fuente
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

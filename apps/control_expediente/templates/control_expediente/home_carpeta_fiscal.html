@@ -1,0 +1,609 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Lista de Carpetas Fiscales {% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'control_expediente/css/control_expediente_modern.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0 fw-bold text-success-custom">Carpeta Fiscal</h2>
+        {% if request.user.role != 1 %}
+        <button type="button" class="btn btn-success-custom shadow-hover" data-bs-toggle="modal"
+            data-bs-target="#documentModal">
+            <i class="bi bi-plus-lg me-2"></i>Agregar Nuevo Expediente
+        </button>
+        {% endif %}
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros de Búsqueda</h5>
+        </div>
+        <div class="card-body bg-light">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Item</label>
+                    <input type="text" class="form-control filter-input" data-column="0" placeholder="Buscar...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Carpeta Fiscal</label>
+                    <input type="text" class="form-control filter-input" data-column="1" placeholder="Buscar...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Delito</label>
+                    <input type="text" class="form-control filter-input" data-column="3" placeholder="Buscar...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Fiscalía</label>
+                    <input type="text" class="form-control filter-input" data-column="4" placeholder="Buscar...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Demandante</label>
+                    <input type="text" class="form-control filter-input" data-column="5" placeholder="Buscar...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Demandado</label>
+                    <input type="text" class="form-control filter-input" data-column="6" placeholder="Buscar...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Responsable</label>
+                    <select class="form-select filter-input" data-column="9" id="responsableSelect">
+                        <option value="">Todos</option>
+                        {% for user in usuarios_legales %}
+                        <option value="{{ user.first_name }} {{ user.last_name }}">
+                            {{ user.first_name }} {{ user.last_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Alerta</label>
+                    <select class="form-select filter-input" data-column="alerta" id="alertaSelect">
+                        <option value="">Todas</option>
+                        <option value="danger">Urgente (≤ 5 días)</option>
+                        <option value="warning">Próximo (≤ 15 días)</option>
+                        <option value="success">A tiempo (> 15 días)</option>
+                        <option value="secondary">Sin fecha</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Especialidad</label>
+                    <select class="form-select filter-input" data-column="8" id="especialidadSelect">
+                        <option value="">Todas</option>
+                        {% for esp in especialidades %}
+                        <option value="{{ esp }}">{{ esp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{% url 'control_expediente:lista_carpeta_fiscal' %}" class="btn btn-secondary w-100">
+                        <i class="bi bi-eraser-fill me-2"></i>Limpiar
+                    </a>
+                </div>
+            </div>
+            <div class="mt-3 text-end text-muted small">
+                Total expedientes penales: <span id="expedienteCount" class="fw-bold text-dark">{{
+                    caso_judiciales|length }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-lg">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 70vh;">
+                <table class="table table-modern table-hover mb-0" id="documentsTable">
+                    <thead class="sticky-top">
+                        <tr>
+                            <th class="text-center" style="width: 5%;">Item</th>
+                            <th>Carpeta Fiscal</th>
+                            <th>Pendiente</th>
+                            <th>Delito</th>
+                            <th>Fiscalía</th>
+                            <th>Demandante</th>
+                            <th>Demandado</th>
+                            <th>Sede</th>
+                            <th>Especialidad</th>
+                            <th>Responsable</th>
+                            {% if request.user.role != 1 %}
+                            <th class="text-center">Acciones</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cj in caso_judiciales %}
+                        <tr class="clickable-row"
+                            data-href="{% url 'control_expediente:ver_seguimiento_carpeta_fiscal' cj.id %}"
+                            data-alerta="{{ cj.alerta_color }}">
+                            <td class="text-center fw-bold">{{ cj.item|default:'' }}</td>
+                            <td class="fw-bold text-success-custom text-nowrap">{{ cj.carpeta_fiscal }}</td>
+                            <td>{{ cj.pendiente|default:''|safe|truncatechars_html:100 }}</td>
+                            <td>{{ cj.delito|default:''}}</td>
+                            <td>{{ cj.fiscalia|default:'' }}</td>
+                            <td
+                                class="{% if cj.representante == 'Demandante' %}bg-success bg-opacity-10 fw-bold{% endif %}">
+                                {{ cj.demandante }}</td>
+                            <td
+                                class="{% if cj.representante == 'Demandado' %}bg-success bg-opacity-10 fw-bold{% endif %}">
+                                {{ cj.demandado }}</td>
+                            <td>{{ cj.sede|default:"" }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ cj.especialidad|default:"" }}</span>
+                            </td>
+                            <td>{{ cj.responsable.first_name|default:"" }} {{ cj.responsable.last_name|default:"" }}
+                            </td>
+                            {% if request.user.role != 1 %}
+                            <td class="text-center action-column">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-dark btn-editar"
+                                        data-bs-toggle="modal" data-bs-target="#editCasoJudicialModal"
+                                        data-id="{{ cj.id }}" data-codigo="{{ cj.item|default_if_none:'' }}"
+                                        data-expediente="{{ cj.carpeta_fiscal|default_if_none:'' }}"
+                                        data-sede="{{ cj.sede|default_if_none:'' }}"
+                                        data-especialidad="{{ cj.especialidad|default_if_none:'' }}"
+                                        data-materia="{{ cj.delito }}"
+                                        data-juzgado="{{ cj.fiscalia|default_if_none:'' }}"
+                                        data-demandante="{{ cj.demandante }}" data-demandado="{{ cj.demandado }}"
+                                        data-anioinicio="{{ cj.anio_inicio|default_if_none:'' }}"
+                                        data-representante="{{ cj.representante }}"
+                                        data-responsable="{{ cj.responsable.id|default_if_none:'' }}"
+                                        data-concluido="{{ cj.concluido|default_if_none:'' }}"
+                                        data-pendiente="{{ cj.pendiente }}"
+                                        data-seguimiento-id="{% with cj.seguimientos_ordenados.0 as ult %}{{ ult.id }}{% endwith %}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    {% if request.user.role == 3 %}
+                                    <a href="{% url 'control_expediente:eliminar_carpeta_fiscal' cj.id %}"
+                                        class="btn btn-sm btn-outline-danger btnEliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm text-white position-relative"
+                                        style="background-color: var(--bs-{{ cj.alerta_color }}); border: none;"
+                                        title="Alerta">
+                                        <i class="bi bi-bell-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="documentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" id="draggableDocumentModal">
+        <div class="modal-content">
+            <div class="modal-header card-header-success">
+                <h5 class="modal-title">Agregar Nuevo Expediente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="expedienteForm" method="POST" action="{% url 'control_expediente:lista_carpeta_fiscal' %}"
+                    enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.media }}
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Item</label>
+                            {{ form.item }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Carpeta Fiscal</label>
+                            {{ form.carpeta_fiscal }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sede</label>
+                            {{ form.sede }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Especialidad</label>
+                            {{ form.especialidad }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Delito</label>
+                            {{ form.delito }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fiscalía</label>
+                            {{ form.fiscalia }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Demandante</label>
+                            {{ form.demandante }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Demandado</label>
+                            {{ form.demandado }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Representa a</label>
+                            {{ form.representante }}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">Responsable</label>
+                            {{ form.responsable }}
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success-custom px-5 btnGuardar">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editCasoJudicialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="editCasoJudicialDialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-success">
+                <h5 class="modal-title">Editar Expediente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'control_expediente:editar_carpeta_fiscal' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <input type="hidden" id="edit_seguimiento_id" name="seguimiento_id">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Item</label>
+                            <input type="text" class="form-control" id="edit_id_codigo" name="item">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Carpeta Fiscal</label>
+                            <input type="text" class="form-control" id="edit_id_expediente" name="carpeta_fiscal">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sede</label>
+                            <input type="text" class="form-control" id="edit_id_sede" name="sede">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Especialidad</label>
+                            <input type="text" class="form-control" id="edit_id_especialidad" name="especialidad">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Delito</label>
+                            <input type="text" class="form-control" id="edit_id_materia" name="delito">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fiscalia</label>
+                            <input type="text" class="form-control" id="edit_id_juzgado" name="fiscalia">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Demandante</label>
+                            <input type="text" class="form-control" id="edit_id_demandante" name="demandante">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Demandado</label>
+                            <input type="text" class="form-control" id="edit_id_demandado" name="demandado">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Representa a</label>
+                            <select class="form-select" id="edit_id_representante" name="representante">
+                                <option value="">---------</option>
+                                <option value="Demandante">Demandante</option>
+                                <option value="Demandado">Demandado</option>
+                                <option value="Martillero">Martillero</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Responsable</label>
+                            <select class="form-select" id="edit_responsable" name="responsable">
+                                {% for user in usuarios_legales %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-success-custom">Estado</label>
+                            <select class="form-select" id="edit_concluido" name="concluido">
+                                <option value="True">Activo</option>
+                                <option value="False">Concluido</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-none">
+                            <label class="form-label">Pendiente</label>
+                            <textarea class="form-control ckeditor" id="edit_id_pendiente" name="pendiente"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success-custom px-5 btnGuardar2">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    CKEDITOR.replace('edit_id_pendiente', {
+        toolbar: [
+            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+            { name: 'colors', items: ['TextColor', 'BGColor'] },
+            { name: 'paragraph', items: ['NumberedList', 'BulletedList'] }
+        ]
+    });
+
+    function makeModalDraggable(modalId, dialogId, headerId) {
+        const modal = document.getElementById(modalId);
+        const modalDialog = document.getElementById(dialogId);
+        const modalHeader = document.getElementById(headerId);
+
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        modal.addEventListener('shown.bs.modal', function () {
+            const rect = modalDialog.getBoundingClientRect();
+            modalDialog.style.position = 'fixed';
+            modalDialog.style.top = rect.top + 'px';
+            modalDialog.style.left = rect.left + 'px';
+            modalDialog.style.margin = '0';
+            modalDialog.style.transform = 'none';
+            modalDialog.style.width = rect.width + 'px';
+        });
+
+        modalHeader.addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            const rect = modalDialog.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                modalDialog.style.top = `${e.clientY - offsetY}px`;
+                modalDialog.style.left = `${e.clientX - offsetX}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            modalDialog.removeAttribute('style');
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        makeModalDraggable('documentModal', 'draggableDocumentModal', 'documentModalHeader');
+        makeModalDraggable('editCasoJudicialModal', 'editCasoJudicialDialog', 'editCasoJudicialHeader');
+
+        const table = document.getElementById("documentsTable");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        function parseCodigo(codigo) {
+            const [numStr, yearStr] = codigo.split("-");
+            const numero = parseInt(numStr, 10);
+            const anio = parseInt(yearStr, 10);
+            return { anio, numero };
+        }
+
+        rows.sort((a, b) => {
+            const codigoA = a.children[0].textContent.trim();
+            const codigoB = b.children[0].textContent.trim();
+            const aParsed = parseCodigo(codigoA);
+            const bParsed = parseCodigo(codigoB);
+            if (aParsed.anio !== bParsed.anio) {
+                return aParsed.anio - bParsed.anio;
+            } else {
+                return aParsed.numero - bParsed.numero;
+            }
+        });
+
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll(".clickable-row");
+        rows.forEach(row => {
+            row.addEventListener("click", function (e) {
+                if (e.target.closest(".action-column") || e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('.btn-group')) {
+                    return;
+                }
+                const url = this.dataset.href;
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', filtrarTabla);
+        });
+
+        document.querySelectorAll('.filter-select').forEach(select => {
+            select.addEventListener('change', filtrarTabla);
+        });
+
+        function filtrarTabla() {
+            const filtros = {};
+            document.querySelectorAll('.filter-input').forEach(input => {
+                const columna = input.dataset.column;
+                const valor = input.value.trim().toLowerCase();
+                if (valor) {
+                    filtros[columna] = valor;
+                }
+            });
+
+            document.querySelectorAll('#documentsTable tbody tr').forEach(fila => {
+                let mostrar = true;
+                for (const columna in filtros) {
+                    if (columna === "alerta") continue;
+                    const celda = fila.cells[parseInt(columna)];
+                    if (celda) {
+                        const textoCelda = celda.textContent.trim().toLowerCase();
+                        if (!textoCelda.includes(filtros[columna])) {
+                            mostrar = false;
+                            break;
+                        }
+                    }
+                }
+                if (mostrar && filtros["alerta"]) {
+                    const colorFila = fila.dataset.alerta ? fila.dataset.alerta.toLowerCase() : "";
+                    if (colorFila !== filtros["alerta"]) {
+                        mostrar = false;
+                    }
+                }
+                fila.style.display = mostrar ? '' : 'none';
+            });
+        }
+
+        const editButtons = document.querySelectorAll('.btn-editar');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const codigo = button.getAttribute('data-codigo');
+                const id = button.getAttribute('data-id');
+
+                document.getElementById('edit_id').value = id;
+                document.getElementById('edit_id_codigo').value = codigo;
+                document.getElementById('edit_id_expediente').value = button.getAttribute('data-expediente');
+                document.getElementById('edit_id_sede').value = button.getAttribute('data-sede');
+                document.getElementById('edit_id_especialidad').value = button.getAttribute('data-especialidad');
+                document.getElementById('edit_id_materia').value = button.getAttribute('data-materia');
+                document.getElementById('edit_id_juzgado').value = button.getAttribute('data-juzgado');
+                document.getElementById('edit_id_demandante').value = button.getAttribute('data-demandante');
+                document.getElementById('edit_id_demandado').value = button.getAttribute('data-demandado');
+                document.getElementById('edit_id_representante').value = button.getAttribute('data-representante');
+                document.getElementById('edit_responsable').value = button.getAttribute('data-responsable');
+                document.getElementById('edit_concluido').value = button.getAttribute('data-concluido');
+                document.getElementById('edit_seguimiento_id').value = button.getAttribute('data-seguimiento-id') || '';
+
+                const observacionHtml2 = button.getAttribute('data-pendiente');
+                if (CKEDITOR.instances['edit_id_pendiente']) {
+                    CKEDITOR.instances['edit_id_pendiente'].setData(observacionHtml2 || '');
+                }
+            });
+        });
+    });
+
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar');
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                const campos = form.querySelectorAll("input, select, textarea");
+                let formValido = true;
+                campos.forEach(campo => {
+                    if (campo.offsetParent !== null && campo.hasAttribute("required") && !campo.value.trim()) {
+                        formValido = false;
+                    }
+                });
+
+                if (!formValido) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos incompletos',
+                        text: 'Por favor completa todos los campos obligatorios.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#31A095',
+                    });
+                    return;
+                }
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro guardado correctamente"
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    })();
+
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro actualizado correctamente"
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    })();
+
+    (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#31A095',
+                    cancelButtonColor: '#000000',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const table = document.getElementById("documentsTable");
+        const countSpan = document.getElementById("expedienteCount");
+        function updateCount() {
+            const visibleRows = Array.from(table.querySelectorAll("tbody tr"))
+                .filter(row => row.style.display !== "none");
+            countSpan.textContent = visibleRows.length;
+        }
+        updateCount();
+        document.querySelectorAll(".filter-input").forEach(input => {
+            input.addEventListener("input", updateCount);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+INSERT INTO partidas_planos_plano (partida,fecha,descripcion,pg,ubicacion,costo,centro_costos,pdf) VALUES 
+('288-2024','07/16/2024','Certificado Parámetros Urbanisticos y Edificatorios Sub Lote A-1-2',1,'Los Olivos',41.3,'Canta Callao','planos_y_otros/Certificado Parámetros Urbanisticos y Edificatorios Sub Lote A-1-2.pdf'),
+('289-2024','07/16/2024','Certificado Parámetros Urbanisticos y Edificatorios Sub Lote A-1-3',1,'Los Olivos',41.3,'Canta Callao','planos_y_otros/Certificado Parámetros Urbanisticos y Edificatorios Sub Lote A-1-3.pdf'),
+('290-2024','07/16/2024','Certificado Parámetros Urbanisticos y Edificatorios Sub Lote A-1-4',1,'Los Olivos',41.3,'Canta Callao','planos_y_otros/Certificado Parámetros Urbanisticos y Edificatorios Sub Lote A-1-4.pdf'),
+('','09/10/2024','Calle Los Tornos 100_102_104 Urb. Tupac Amarú ',1,'Tupac Amarú',13.5,'T.A.','planos_y_otros/Calle Los Tornos 100_102_104 Urb. Tupac Amarú .pdf'),
+('','09/10/2024','Sub Lote A-1-4 Localización_Ubicación_Replanteo - Res. 032-2012 ',2,'Los Olivos',0,'Canta Callao','planos_y_otros/Sub Lote A-1-4 Localización_Ubicación_Replanteo.pdf'),
+('','09/10/2024','Sub Lote A-1-4 Perimétrico (P-01) y Topográfico (T-01)  ',2,'Los Olivos',0,'Canta Callao','planos_y_otros/Sub Lote A-1-4 Perimétrico_Topográfico.pdf'),
+('','03/03/2020','Plano de Replanteo A-1-2_ A-1-3_A-1-4_Replanteo - Res. 032-2012',1,'Los Olivos',0,'Canta Callao','planos_y_otros/Plano de Replanteo A-1-2_ A-1-3_A-1-4.pdf'),
+('297143','02/27/2020','Replanteo de lotización de la "Urb. La Florida de Pro"  LAMINA RL - 01 JUNIO 2012   A-1-2, A-1-3,A-1-4',2,'Los Olivos',0,'Canta Callao','planos_y_otros/Planos Canta Callao Habilitación Urbana.pdf'),
+('','09/30/2013','Sub Lote A-1-5  LAMINA SLU - 7  SET 2013 - Res. 047-2013 que rectifica la Res. 063-2012',0,'Los Olivos',12.5,'Canta Callao','planos_y_otros/Sub Lote A-1-5_Plano.pdf'),
+('','09/01/2013','Sub Lote  A-1-4  LAMINA SLU - 6 SET 2013 - Res. 047-2013',2,'Los Olivos',0,'Canta Callao','planos_y_otros/Sub Lote A_1_4_SLU_6_2013.pdf'),
+('','12/12/2024','Plano de Ubicación y Localización (U-1) - Sub Lote A-1-3',1,'Los Olivos',0,'Canta Callao','planos_y_otros/PLANO DE UBICACION -U-1 SUB LOTE A-1-3.pdf'),
+('','04/01/2023','Instalaciones electricas - Distribución de alimentadores 2° al 5° Piso Sub Lote A-1-3 Lamina IE-04',1,'Los Olivos',0,'Canta Callao','planos_y_otros/Instalaciones electricas - Distribución de alimentadores 2° al 5° Piso Sub Lote A-1-3 Lamina IE-04.pdf'),
+('','04/01/2023','Instalaciones electricas - Distribución de alimentadores 1° Piso Sub Lote A-1-3 Lamina IE-03',1,'Los Olivos',0,'Canta Callao','planos_y_otros/Instalaciones electricas - Distribución de alimentadores 1° Piso Sub Lote A-1-3 Lamina IE-03.pdf'),
+('','10/01/2023','Solicitud de medidor Trifásico - Instalación eléctrica - Jr. Los Tornos N° 100 SMP - Lamina IE-01 - Primera, segunda y tercera piso.',1,'SMP',0,'Tornos','planos_y_otros/Solicitud de medidor Trifásico - Instalación eléctrica - Jr. Los Tornos N° 100 SMP - Lamina IE-01.pdf'),
+('','06/11/2022','AYUDA MEMORIA A-1-3 CONDOMINIO CANTA CALLAO ',12,'Los Olivos',0,'Canta Callao','planos_y_otros/AYUDA MEMORIA A-1-3 CONDOMINIO CANTA CALLAO (1).pdf'),
+('','08/31/2023','AYUDA MEMORIA A-1-4 CONDOMINIO CANTA CALLAO',16,'Los Olivos',0,'Canta Callao','planos_y_otros/AYUDA MEMORIA A-1-4 CONDOMINIO CANTA CALLAO.pdf');

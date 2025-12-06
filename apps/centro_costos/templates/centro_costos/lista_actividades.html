@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Listado de Actividades {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centro_costos/centro_costos_modern.css' %}">
+{% endblock %}
+
+{% block link %}
+<li class="nav-item">
+    <a class="nav-link text-white me-2" href="{% url 'home' %}">Inicio</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link text-white me-2" href="{% url 'documentacion' %}">Documentación</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link text-white me-2" href="{% url 'centro_costos:centro_costos_home' %}">Costos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link text-white me-2" href="#">Expediente</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link text-white" href="#">Requerimientos</a>
+</li>
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container-fluid px-4 py-4">
+    <div class="text-center mb-4">
+        <h3 class="fw-bold" style="color: var(--primary-color);">Listado de Actividades Tupac Amaru</h3>
+    </div>
+
+    <div class="filter-section">
+        <h5 class="mb-3 fw-bold text-secondary">Filtros de Búsqueda</h5>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Código</label>
+                <input type="text" class="form-control filter-input" data-column="0" placeholder="Buscar por código...">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control filter-input" data-column="1" placeholder="Buscar por nombre...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Centro de Costos</label>
+                <input type="text" class="form-control filter-input" data-column="2"
+                    placeholder="Buscar por centro de costos...">
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{% url 'centro_costos:lista_actividades' %}" id="clearFilters" class="btn btn-secondary w-100">
+                    Limpiar
+                </a>
+            </div>
+        </div>
+
+        {% if request.user.role != 1 and request.user.role != 2 %}
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-accent px-4 py-2" data-bs-toggle="modal"
+                data-bs-target="#actividadModal">
+                <i class="bi bi-plus-lg"></i> Agregar Nueva Actividad
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Tabla -->
+            <div class="table-responsive" style="max-height: 65vh;">
+                <table class="table table-modern table-hover" id="documentsTable">
+                    <thead style="position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Centro de Costos</th>
+                            <th>Tipo</th>
+                            <th>Responsable</th>
+                            {% if request.user.role != 1 and request.user.role != 2 %}
+                            <th>Acciones</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for actividad in actividades %}
+                        <tr>
+                            <td>{{ actividad.codigo }}</td>
+                            <td>{{ actividad.nombre }}</td>
+                            <td>{{ actividad.centro_de_costos }}</td>
+                            <td>{{ actividad.tipo }}</td>
+                            <td>{{ actividad.responsable }}</td>
+
+                            {% if request.user.role != 1 and request.user.role != 2 %}
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-dark me-1 btn-editar"
+                                        data-bs-toggle="modal" data-bs-target="#editactividadModal"
+                                        data-id="{{ actividad.id }}" data-codigo="{{ actividad.codigo }}"
+                                        data-nombre="{{ actividad.nombre }}"
+                                        data-centro-id="{{ actividad.centro_de_costos.id }}"
+                                        data-centro-nombre="{{ actividad.centro_de_costos.nombre }}"
+                                        data-tipo="{{ actividad.tipo }}" data-responsable="{{ actividad.responsable }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <a href="{% url 'centro_costos:eliminar_actividad' actividad.id %}"
+                                        class="btn btn-sm btn-outline-danger btnEliminar" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar nuevo actividad -->
+<div class="modal fade" id="actividadModal" tabindex="-1" aria-labelledby="actividadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actividadModalLabel">Agregar Nueva Actividad</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'centro_costos:lista_actividades' %}" id="formProyecto">
+                    {% csrf_token %}
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="id_nombre_proyecto" class="form-label">Nombre de la actividad</label>
+                                {{ form.nombre }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_codigo_proyecto" class="form-label">Código</label>
+                                {{ form.codigo }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="centro_de_costos_selector" class="form-label">Centro de costos</label>
+                                <select id="centro_de_costos_selector" name="centro_de_costos" class="form-select">
+                                    <option value="">Seleccione centro de costo</option>
+                                    {% for centro in centros_de_costos %}
+                                    <option value="{{ centro.id }}">{{ centro.nombre }}</option>
+                                    {% endfor %}
+                                    <option value="otros">Otros</option>
+                                </select>
+                                <input type="text" name="nuevo_centro_de_costos" id="nuevo_centro_de_costos"
+                                    class="form-control mt-2" placeholder="Ingrese nuevo centro de costos"
+                                    style="display: none;">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_tipo_gasto" class="form-label">Tipo</label>
+                                {{ form.tipo }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_responsable" class="form-label">Responsable (opcional)</label>
+                                {{ form.responsable }}
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-accent px-5 py-2 btnGuardar">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar proyecto -->
+<div class="modal fade" id="editactividadModal" tabindex="-1" aria-labelledby="editactividadModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editactividadModalLabel">Editar Actividad</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'centro_costos:editar_actividad' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="edit_nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="edit_nombre" name="nombre">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="edit_codigo" class="form-label">Código</label>
+                                <input type="text" class="form-control" id="edit_codigo" name="codigo">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_centro_de_costos" class="form-label">Centro de costos</label>
+                                <select class="form-select" id="edit_centro_de_costos" name="centro_de_costos">
+                                    {% for centro in centros_de_costos %}
+                                    <option value="{{ centro.id }}">{{ centro.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="edit_tipo_gasto" class="form-label">Tipo</label>
+                                <select class="form-select" id="edit_tipo" name="tipo">
+                                    <option value="Por separado">Por separado</option>
+                                    <option value="A todo costo">A todo costo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_responsable" class="form-label">Responsable (opcional)</label>
+                                <input type="text" class="form-control" id="edit_responsable" name="responsable">
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary px-5 py-2 btnGuardar2"
+                                id="btn_guardar_edicion">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // FILTRO EN TIEMPO REAL
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', filtrarTabla); // Detecta tanto texto como selects
+        });
+
+        function filtrarTabla() {
+            const filtros = {};
+
+            // Recolectamos todos los filtros activos
+            document.querySelectorAll('.filter-input').forEach(input => {
+                const columna = input.dataset.column;
+                const valor = input.value.trim().toLowerCase();
+                if (valor) {
+                    filtros[columna] = valor;
+                }
+            });
+
+            // Recorremos cada fila de la tabla
+            document.querySelectorAll('#documentsTable tbody tr').forEach(fila => {
+                let mostrar = true;
+
+                for (const columna in filtros) {
+                    const celda = fila.cells[columna];
+                    if (celda) {
+                        const textoCelda = celda.textContent.toLowerCase();
+                        if (!textoCelda.includes(filtros[columna])) {
+                            mostrar = false;
+                            break;
+                        }
+                    }
+                }
+
+                fila.style.display = mostrar ? '' : 'none';
+            });
+        }
+
+
+        // EDITAR
+        const editButtons = document.querySelectorAll('.btn-editar');
+
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Obtener referencias
+                const centroSelect = document.getElementById('edit_centro_de_costos');
+
+                // Setear valores básicos
+                document.getElementById('edit_id').value = button.getAttribute('data-id');
+                document.getElementById('edit_nombre').value = button.getAttribute('data-nombre');
+                document.getElementById('edit_codigo').value = button.getAttribute('data-codigo');
+                document.getElementById('edit_tipo').value = button.getAttribute('data-tipo');
+                document.getElementById('edit_responsable').value = button.getAttribute('data-responsable');
+
+                // Centro de costos (ya no hay opción "otros")
+                const centroId = button.getAttribute('data-centro-id');
+                centroSelect.value = centroId;
+            });
+        });
+
+    });
+
+
+    //ALERT ELIMINAR
+    (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Evita que el enlace se siga inmediatamente
+
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#E88700',
+                    cancelButtonColor: '#000',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirige al href del botón
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    // BTN GUARDAR
+    // BTN GUARDAR CON VALIDACIÓN (adaptado para "centro de costos" con opción "otros")
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar');
+
+        // Función para mostrar u ocultar el campo "Nuevo centro de costos"
+        const mostrarCampoNuevoCentro = () => {
+            const centroSelector = document.getElementById("centro_de_costos_selector");
+            const nuevoCentroInput = document.getElementById("nuevo_centro_de_costos");
+            if (centroSelector.value === "otros") {
+                nuevoCentroInput.style.display = 'block'; // Mostrar el campo
+            } else {
+                nuevoCentroInput.style.display = 'none'; // Ocultar el campo
+            }
+        };
+
+        // Llamar a la función al cargar la página para que se verifique el estado del selector
+        mostrarCampoNuevoCentro();
+
+        // Escuchar cambios en el selector de centro de costos
+        document.getElementById("centro_de_costos_selector").addEventListener('change', mostrarCampoNuevoCentro);
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const form = this.closest('form');
+
+                const nombre = document.getElementById("id_nombre").value.trim();
+                const codigo = document.getElementById("id_codigo").value.trim();
+                const tipoGasto = document.getElementById("id_tipo").value;
+                console.log(tipoGasto);
+                const responsable = document.getElementById("id_responsable").value;
+
+                const centroSelector = document.getElementById("centro_de_costos_selector");
+                //const centroOriginal = document.getElementById("id_centro_de_costos");
+                const nuevoCentro = document.getElementById("nuevo_centro_de_costos").value.trim();
+
+                let centroValido = false;
+
+                if (centroSelector.value === "otros") {
+                    centroValido = nuevoCentro !== "";
+                } else {
+                    centroValido = centroSelector.value !== "";
+                    //centroOriginal.value = centroSelector.value; // asegura que se envíe el valor correcto
+                }
+
+                if (!nombre || !codigo || !centroValido || tipoGasto === "") {
+                    Swal.fire({
+                        title: "Campos incompletos",
+                        text: "Por favor, completa todos los campos antes de guardar.",
+                        icon: "warning",
+                        confirmButtonColor: '#3b4252',
+                    });
+                    return; // No continúa si hay campos vacíos
+                }
+
+                // Si todo está ok, muestra el toast y luego envía
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro guardado correctamente"
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    })();
+
+
+
+    // BTN ACTUALIZAR
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Previene el submit inmediato
+
+                const form = this.closest('form');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro actualizado correctamente"
+                }).then(() => {
+                    form.submit(); // Enviar el formulario después del toast
+                });
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

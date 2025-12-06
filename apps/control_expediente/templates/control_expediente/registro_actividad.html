@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Registro de actividades {% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'control_expediente/css/control_expediente_modern.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-10">
+            <h2 class="text-center mb-4 fw-bold text-dark">REGISTRO DE ACTIVIDADES</h2>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                    <h5 class="card-title fw-bold text-secondary mb-0"><i class="bi bi-funnel-fill me-2"></i>Filtros de
+                        búsqueda</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-secondary small">Desde</label>
+                            <input type="date" class="form-control" id="fechaDesde">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-secondary small">Hasta</label>
+                            <input type="date" class="form-control" id="fechaHasta">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-secondary small">Nombre</label>
+                            <select class="form-select filter-input" data-column="1">
+                                <option value="">Todos</option>
+                                {% for usuario in usuarios_legales %}
+                                <option value="{{ usuario.first_name }} {{ usuario.last_name }}">
+                                    {{ usuario.first_name }} {{ usuario.last_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-secondary small">Actividad</label>
+                            <input type="text" class="form-control filter-input" data-column="2"
+                                placeholder="Buscar actividad...">
+                        </div>
+                        <div class="col-12 text-end mt-3">
+                            <a href="{% url 'control_expediente:lista_registros_actividad' %}" id="clearFilters"
+                                class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle me-1"></i>Limpiar Filtros
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-lg">
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 65vh;">
+                        <table class="table table-modern table-hover mb-0" id="documentsTable">
+                            <thead class="sticky-top">
+                                <tr>
+                                    <th>FECHA</th>
+                                    <th>NOMBRE</th>
+                                    <th>ACTIVIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cj in registro_actividad %}
+                                <tr>
+                                    <td>{{ cj.fecha|date:"d/m/Y h:i:s A" }}</td>
+                                    <td><span class="fw-bold text-dark">{{ cj.nombre }}</span></td>
+                                    <td>{{ cj.actividad }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabla = document.getElementById("documentsTable");
+        if (!tabla) return;
+
+        const filas = tabla.querySelectorAll("tbody tr");
+
+        const fechaDesdeInput = document.getElementById("fechaDesde");
+        const fechaHastaInput = document.getElementById("fechaHasta");
+        const selectNombre = document.querySelector('select[data-column="1"]');
+        const inputActividad = document.querySelector('input[data-column="2"]');
+
+        if (fechaDesdeInput) fechaDesdeInput.addEventListener("input", aplicarFiltros);
+        if (fechaHastaInput) fechaHastaInput.addEventListener("input", aplicarFiltros);
+        if (selectNombre) selectNombre.addEventListener("change", aplicarFiltros);
+        if (inputActividad) inputActividad.addEventListener("input", aplicarFiltros);
+
+        function aplicarFiltros() {
+            const desde = fechaDesdeInput ? fechaDesdeInput.value : "";
+            const hasta = fechaHastaInput ? fechaHastaInput.value : "";
+            const filtroNombre = selectNombre ? selectNombre.value.toLowerCase().trim() : "";
+            const filtroActividad = inputActividad ? inputActividad.value.toLowerCase().trim() : "";
+
+            filas.forEach(fila => {
+                const celdas = fila.querySelectorAll("td");
+
+                const textoFecha = celdas[0]?.textContent.trim() || "";
+                const textoNombre = celdas[1]?.textContent.trim().toLowerCase() || "";
+                const textoActividad = celdas[2]?.textContent.trim().toLowerCase() || "";
+
+                const partes = textoFecha.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                const fechaFormateada = partes ? `${partes[3]}-${partes[2]}-${partes[1]}` : null;
+
+                let mostrar = true;
+
+                if (fechaFormateada) {
+                    if (desde && fechaFormateada < desde) mostrar = false;
+                    if (hasta && fechaFormateada > hasta) mostrar = false;
+                }
+
+                if (filtroNombre && !textoNombre.includes(filtroNombre)) mostrar = false;
+                if (filtroActividad && !textoActividad.includes(filtroActividad)) mostrar = false;
+
+                fila.style.display = mostrar ? "" : "none";
+            });
+        }
+    });
+</script>
+{% endblock %}

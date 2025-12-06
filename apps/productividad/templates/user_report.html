@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<h2>Reporte de {{ target.get_full_name }}</h2>
+<h3>Resumen mensual</h3>
+<table class="table">
+<thead><tr><th>Año</th><th>Mes</th><th>Avg Score</th><th>Actividades</th></tr></thead>
+<tbody>
+{% for s in summary %}
+<tr>
+<td>{{ s.date__year }}</td>
+<td>{{ s.date__month }}</td>
+<td>{{ s.avg_score|default:'-' }}</td>
+<td>{{ s.activities }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h3>Actividades recientes</h3>
+<ul>
+{% for a in activities %}
+<li>{{ a.date }} - {{ a.title }} - {{ a.score|default:'Sin calificar' }}</li>
+{% endfor %}
+</ul>
+{% endblock %}

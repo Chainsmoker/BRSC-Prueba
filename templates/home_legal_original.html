@@ -1,0 +1,394 @@
+{% extends "./base.html" %}
+{% load static %}
+
+{% block body %}
+{% include "./components/navbar.html" %}
+
+<style>
+    .card-title {
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .bg-rojo {
+        background-color: #bf616a; /* rojo personalizado */
+        color: white;
+    }
+
+    .bg-amarillo {
+        background-color: #ebcb8b; /* amarillo personalizado */
+        color: black;
+    }
+
+    .bg-verde {
+        background-color: #a3be8c; /* verde personalizado */
+        color: white;
+    }
+
+    /* fila clickeable */
+    .fila-link {
+        display: block;
+        width: 100%;
+        height: 100%;
+        color: inherit; /* mantiene color según bg */
+        text-decoration: none;
+        padding: 0.5rem;
+        transition: background-color 0.2s ease;
+    }
+
+    /* hover sobre fila */
+    .fila-link:hover {
+        background-color: rgba(0,0,0,0.15); /* efecto hover sutil */
+        cursor: pointer;
+    }
+
+</style>
+
+
+<div
+    style="background-color: #f5f5f5; padding: 20px; border-radius: 12px; margin-top: 50px; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+    <h4 style="color: #000; margin: 0; text-align: center;">
+        ¡Bienvenido, <span style="font-weight: bold;">{{ request.user.first_name }} 👋🏻</span>
+    </h4>
+</div>
+
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+
+        <!-- MI PERFIL -->
+        <div class="col-12 col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center fw-bold">INFORMACIÓN PERSONAL</div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Documento de Identidad -->
+                        <div class="col-6 mb-3 d-none">
+                            <a href="#" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/dni.png' %}" alt="DNI"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">Documento de Identidad</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- REGISTRO DE ACTIVIDADES -->
+                        <div class="col-12 mb-3 ">
+                            <a href="{% url 'perfil_user' %}"" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/perfil.png' %}" alt="LOGS"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">MI PERFIL</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- CONTROL DE ASISTENCIAS -->
+                        <div class="col-12 mb-3">
+                            <a href="{% url 'asistencia:home' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/asistencias.png' %}" alt="DNI"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">MI REGISTRO DE ASISTENCIAS</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="col-6 mb-3 d-none">
+                            <a href="{% url 'p_canta_callao:lista_proyectos' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/canta_callao.png' %}" alt="LOGS"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">CANTA CALLAO</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÁREA LEGAL -->
+        <div class="col-12 col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center fw-bold">ÁREA LEGAL</div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- CONTROL DE EXPEDIENTES -->
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'control_expediente:lista_expediente' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/control_expedientes.png' %}" alt="Expedientes"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">CONTROL DE EXPEDIENTES</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- CONTROL DE TRÁMITES -->
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'tramites:lista_tramite' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/tramites.png' %}" alt="Trámites"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">CONTROL DE TRÁMITES</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- CONTROL DE EXPEDIENTES Penales -->
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'control_expediente:lista_carpeta_fiscal' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/expedientes_penales.png' %}" alt="Penales"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">CONTROL DE EXPEDIENTES PENALES</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <!-- EXPEDIENTES Y TRÁMITES CONCLUIDOS -->
+                        <div class="col-6 mb-3">
+                            <!-- Botón que abre el modal -->
+                            <a href="{% url 'tramites:lista_tramite_concluidos' %}" class="card-link" data-bs-toggle="modal" data-bs-target="#modalExpedientesConcluidos">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center" style="height: 100px;">
+                                        <img src="{% static 'images/home/expedientes_concluidos.png' %}" alt="Concluidos"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">EXPEDIENTES Y TRÁMITES CONCLUIDOS</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÁREA DOCUMENTACIÓN -->
+        <div class="col-12 col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-center fw-bold">ÁREA DOCUMENTACIÓN</div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Partidas -->
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'lista_partidas' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/partidas.png' %}" alt="Partidas"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">PARTIDAS</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Planos -->
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'lista_planos' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/planos_otros.png' %}" alt="Planos"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">PLANOS Y OTROS</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+
+
+                        <div class="col-12 mb-3">
+                            <a href="{% url 'centro_costos:home' %}" class="card-link">
+                                <div class="card h-100 shadow-sm text-center">
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="height: 100px;">
+                                        <img src="{% static 'images/home/costos.png' %}" alt="Costos"
+                                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title small">CENTRO DE COSTOS</h6>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<!-- Modal EXPEDIENTES Y TRÁMITES CONCLUIDOS -->
+<div class="modal fade" id="modalExpedientesConcluidos" tabindex="-1" aria-labelledby="modalExpedientesConcluidosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-3">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="modalExpedientesConcluidosLabel">EXPEDIENTES Y TRÁMITES CONCLUIDOS</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="mb-4">Seleccione el expediente o trámite concluido que desea concultar.</p>
+        <div class="d-flex justify-content-center gap-3">
+          <a href="{% url 'control_expediente:lista_concluidos' %}" 
+             class="btn text-white fw-semibold boton-modal"
+             style="background-color: #5E7373;">
+            Exp. General
+          </a>
+          <a href="{% url 'control_expediente:lista_concluidos_fiscal' %}" 
+             class="btn text-white fw-semibold boton-modal"
+             style="background-color: #5E7373;">
+            Exp. Penal
+          </a>
+          <a href="{% url 'tramites:lista_tramite_concluidos' %}" 
+             class="btn text-white fw-semibold boton-modal"
+             style="background-color: #5E7373;">
+            Trámites
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal EXPEDIENTES Y TRÁMITES CONCLUIDOS -->
+<div class="modal fade" id="modalExpedientesConcluidos" tabindex="-1" aria-labelledby="modalExpedientesConcluidosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-3">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="modalExpedientesConcluidosLabel">EXPEDIENTES Y TRÁMITES CONCLUIDOS</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="mb-4">Seleccione el expediente o trámite concluido que desea concultar.</p>
+        <div class="d-flex justify-content-center gap-3">
+          <a href="{% url 'control_expediente:lista_concluidos' %}" 
+             class="btn text-white fw-semibold boton-modal"
+             style="background-color: #5E7373;">
+            Exp. General
+          </a>
+          <a href="{% url 'control_expediente:lista_concluidos_fiscal' %}" 
+             class="btn text-white fw-semibold boton-modal"
+             style="background-color: #5E7373;">
+            Exp. Penal
+          </a>
+          <a href="{% url 'tramites:lista_tramite_concluidos' %}" 
+             class="btn text-white fw-semibold boton-modal"
+             style="background-color: #5E7373;">
+            Trámites
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Hace que ambos botones tengan el mismo tamaño */
+  .boton-modal {
+    flex: 1;
+    padding: 10px 0;
+    transition: all 0.3s ease-in-out;
+    border-radius: 8px;
+  }
+
+  /* Efecto hover: cambio de brillo, sombra y ligera elevación */
+  .boton-modal:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    filter: brightness(1.1);
+  }
+
+  /* Asegura que ambos botones tengan el mismo alto */
+  .d-flex .boton-modal {
+    min-width: 120px;
+    text-align: center;
+  }
+</style>
+
+
+
+
+<footer class="text-center w-100" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 20px 10px; ">
+    <p style="margin-bottom: 10px; font-weight: bold;">
+        &copy; {{ current_year }} Sistema Documental Interno (SDI) v1.4 – Todos los derechos reservados<br>
+        Bienes Raíces Santa Clara S.A.C.
+    </p>
+
+    <div style="font-size: 1.5rem;">
+        <a href="https://brsantaclara.com/" target="_blank" style="text-decoration: none">
+            <i class="bi bi-globe" style="color: #000000;"></i>
+        </a>
+        <a href="https://www.youtube.com/@BienesRaicesSantaclara" target="_blank" style="text-decoration: none"
+            class="ms-3">
+            <i class="bi bi-youtube" style="color: #000000;"></i>
+        </a>
+        <a href="https://www.linkedin.com/company/bienes-raices-santa-clara-s-a-c/" target="_blank"
+            style="text-decoration: none" class="ms-3">
+            <i class="bi bi-linkedin" style="color: #000000;"></i>
+        </a>
+    </div>
+</footer>
+
+
+<script>
+    function mostrarAlerta(event) {
+        event.preventDefault();
+        Swal.fire({
+            icon: "error",
+            title: "Módulo en desarrollo",
+            text: "La funcionalidad seleccionada se encuentra en proceso de implementación.",
+        });
+    }
+</script>
+{% endblock %}

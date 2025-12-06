@@ -1,0 +1,607 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %} Lista Canta Callao {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centro_costos/centro_costos_modern.css' %}">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container-fluid px-4 py-4">
+    <div class="text-center mb-4">
+        <h3 class="fw-bold" style="color: var(--primary-color);">LISTA DE GASTOS CANTA CALLAO (2010-2023)</h3>
+    </div>
+
+    <div class="filter-section">
+        <h5 class="mb-3 fw-bold text-secondary">Filtros de Búsqueda</h5>
+        <div class="row g-3">
+            <!-- Año -->
+            <div class="col-md-2">
+                <label for="yearFilter" class="form-label">Año</label>
+                <select class="form-select filter-input" data-column="1" id="yearFilter">
+                    <option value="">Seleccionar año</option>
+                    <option value="2010">2010</option>
+                    <option value="2011">2011</option>
+                    <option value="2012">2012</option>
+                    <option value="2013">2013</option>
+                    <option value="2014">2014</option>
+                    <option value="2015">2015</option>
+                    <option value="2016">2016</option>
+                    <option value="2017">2017</option>
+                    <option value="2018">2018</option>
+                    <option value="2019">2019</option>
+                    <option value="2020">2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                </select>
+            </div>
+
+            <!-- codigo -->
+            <div class="col-md-2">
+                <label class="form-label">Código</label>
+                <input type="text" class="form-control filter-input" data-column="0" placeholder="Código...">
+            </div>
+
+            <!-- concepto -->
+            <div class="col-md-3">
+                <label class="form-label">Concepto</label>
+                <input type="text" class="form-control filter-input" data-column="2" placeholder="Concepto...">
+            </div>
+
+            <!-- detalle -->
+            <div class="col-md-3">
+                <label class="form-label">Detalle</label>
+                <input type="text" class="form-control filter-input" data-column="3" placeholder="Detalle...">
+            </div>
+
+            <!-- Fecha Inicio -->
+            <div class="col-md-2">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control filter-input" data-column="1" id="startDateFilter">
+            </div>
+
+            <!-- Fecha Final -->
+            <div class="col-md-2">
+                <label class="form-label">Fecha Final</label>
+                <input type="date" class="form-control filter-input" data-column="1" id="endDateFilter">
+            </div>
+
+            <!-- Botones -->
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{% url 'centro_costos:lista_canta_callao' %}" id="clearFilters"
+                    class="btn btn-secondary w-100">
+                    Limpiar
+                </a>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button id="exportBtn" class="btn btn-success w-100">
+                    <i class="bi-file-earmark-excel"></i> Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-accent px-4 py-2" data-bs-toggle="modal"
+                data-bs-target="#documentModal">
+                <i class="bi bi-plus-lg"></i> Agregar Nuevo Registro
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Totales -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">TOTAL SOLES (S/)</label>
+                    <input type="text" id="totalDebe" class="form-control fw-bold" disabled
+                        style="background-color: #e8f5e9; color: #2e7d32;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">TOTAL DÓLARES (US$)</label>
+                    <input type="text" id="totalHaber" class="form-control fw-bold" disabled
+                        style="background-color: #e3f2fd; color: #1565c0;">
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-responsive" style="max-height: 65vh;">
+                <table class="table table-modern table-hover" id="documentsTable">
+                    <thead style="position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th>Código</th>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Detalle</th>
+                            <th>Referencia</th>
+                            <th>Monto(S/)</th>
+                            <th>Monto($)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in canta_callao %}
+                        <tr>
+                            <td class="text-nowrap">{{ c.codigo }}</td>
+                            <td class="text-nowrap">{{ c.fecha|date:"d/m/Y" }}</td>
+                            <td>{{ c.concepto }}</td>
+                            <td>{{ c.detalle }}</td>
+                            <td>{{ c.referencia|default_if_none:'' }}</td>
+                            <td data-monto1 class="text-end">{{ c.monto1|default_if_none:""|intcomma }}</td>
+                            <td data-monto2 class="text-end">{{ c.monto2|default_if_none:""|intcomma }}</td>
+
+                            <!-- Acciones en una sola columna -->
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-dark me-1 btn-editar"
+                                        data-bs-toggle="modal" data-bs-target="#editCantaCallaoModal"
+                                        data-id="{{ c.id }}" data-codigo="{{ c.codigo }}"
+                                        data-fecha="{{ c.fecha|date:'Y-m-d' }}" data-concepto="{{ c.concepto }}"
+                                        data-detalle="{{ c.detalle }}"
+                                        data-referencia="{{ c.referencia|default_if_none:'' }}"
+                                        data-monto1="{{ c.monto1 }}" data-monto2="{{ c.monto2 }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <button type="button"
+                                        data-bs-toggle="modal" data-bs-target="#deleteCantaCallaoModal"
+                                        data-id="{{ c.id }}"
+                                        class="btn btn-sm btn-outline-danger btnEliminar" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar nueva registro Canta Callao -->
+<div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentModalLabel">Agregar Nuevo Registro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'centro_costos:lista_canta_callao' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="id_codigo" class="form-label">Código</label>
+                                {{ form.codigo }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_fecha" class="form-label">Fecha</label>
+                                {{ form.fecha }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_concepto" class="form-label">Concepto</label>
+                                {{ form.concepto }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_detalle" class="form-label">Detalle</label>
+                                {{ form.detalle }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_referencia" class="form-label">Referencia</label>
+                                {{ form.referencia }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_monto1" class="form-label">Monto (S/)</label>
+                                {{ form.monto1 }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_monto2" class="form-label">Monto (US$)</label>
+                                {{ form.monto2 }}
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-accent px-5 py-2 btnGuardar">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar Canta Callao -->
+<div class="modal fade" id="editCantaCallaoModal" tabindex="-1" aria-labelledby="editCantaCallaoModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCantaCallaoModalLabel">Editar Registro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'centro_costos:editar_canta_callao' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="edit_id_codigo" class="form-label">Código</label>
+                                <input type="text" class="form-control" id="edit_id_codigo" name="codigo">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_id_fecha" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="edit_id_fecha" name="fecha">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_id_concepto" class="form-label">Concepto</label>
+                                <input type="text" class="form-control" id="edit_id_concepto" name="concepto">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_id_detalle" class="form-label">Detalle</label>
+                                <input type="text" class="form-control" id="edit_id_detalle" name="detalle">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_id_referencia" class="form-label">Referencia</label>
+                                <input type="text" class="form-control" id="edit_id_referencia" name="referencia">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_id_monto1" class="form-label">Monto (S/)</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_id_monto1" name="monto1">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_id_monto2" class="form-label">Monto (US$)</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_id_monto2" name="monto2">
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary px-5 py-2 btnGuardar2">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteCantaCallaoModal" tabindex="-1" aria-labelledby="deleteCantaCallaoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCantaCallaoModalLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    document.getElementById("exportBtn").addEventListener("click", function () {
+        const table = document.getElementById("documentsTable");
+        const rows = [];
+
+        // Obtener encabezados excluyendo "Acciones"
+        const headers = [];
+        table.querySelectorAll("thead th").forEach((th, i) => {
+            if (th.innerText.trim() !== "Acciones") {
+                headers.push(th.innerText.trim());
+            }
+        });
+        rows.push(headers);
+
+        // Obtener filas visibles y excluir la columna "Acciones"
+        table.querySelectorAll("tbody tr").forEach(tr => {
+            if (tr.style.display !== "none") {
+                const row = [];
+                const cells = tr.querySelectorAll("td");
+                for (let i = 0; i < cells.length - 1; i++) { // -1 para excluir "Acciones"
+                    row.push(cells[i].innerText.trim());
+                }
+                rows.push(row);
+            }
+        });
+
+        // Crear hoja de cálculo
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Documentos");
+
+        // Aplicar autofiltro en la hoja
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        worksheet['!autofilter'] = { ref: XLSX.utils.encode_range(range) };
+
+        XLSX.writeFile(workbook, "documento.xlsx");
+    });
+
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // EDITAR REGISTRO
+        const editButtons = document.querySelectorAll('.btn-editar');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                console.log("ID:", button.getAttribute('data-id'));
+                console.log("Código:", button.getAttribute('data-codigo'));
+                document.getElementById('edit_id').value = button.getAttribute('data-id');
+                document.getElementById('edit_id_codigo').value = button.getAttribute('data-codigo');
+                document.getElementById('edit_id_fecha').value = button.getAttribute('data-fecha');
+                document.getElementById('edit_id_concepto').value = button.getAttribute('data-concepto');
+                document.getElementById('edit_id_detalle').value = button.getAttribute('data-detalle');
+                document.getElementById('edit_id_referencia').value = button.getAttribute('data-referencia');
+                document.getElementById('edit_id_monto1').value = button.getAttribute('data-monto1');
+                console.log("Monto 1:", button.getAttribute('data-monto1'));
+                document.getElementById('edit_id_monto2').value = button.getAttribute('data-monto2');
+            });
+        });
+
+        // CAMBIAR PUNTO POR COMA EN TABLA
+        const celdasDebe = document.querySelectorAll('td[data-monto1]');
+        const celdasHaber = document.querySelectorAll('td[data-monto2]');
+
+        celdasDebe.forEach(function (celda) {
+            //celda.textContent = celda.textContent.replace(',', '.');
+        });
+
+        celdasHaber.forEach(function (celda) {
+            //celda.textContent = celda.textContent.replace(',', '.');
+        });
+
+        // FILTRO EN TIEMPO REAL
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', filterTable);
+            input.addEventListener('change', filterTable);
+        });
+
+        function filterTable() {
+            const filters = {};
+
+            // Recolectar valores no vacíos de inputs que NO son fechas
+            document.querySelectorAll('.filter-input').forEach(input => {
+                const columnIndex = input.dataset.column;
+                const value = input.value.trim().toLowerCase();
+
+                if (input.type !== 'date' && value) {
+                    filters[columnIndex] = value;
+                }
+            });
+
+            document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
+                let visible = true;
+
+                // Filtros de texto
+                for (const columnIndex in filters) {
+                    const cell = row.cells[columnIndex];
+                    if (!cell || !cell.textContent.toLowerCase().includes(filters[columnIndex])) {
+                        visible = false;
+                        break;
+                    }
+                }
+
+                // Filtros de fecha
+                if (visible) {
+                    const startDate = document.getElementById('startDateFilter').value;
+                    const endDate = document.getElementById('endDateFilter').value;
+                    const rowDateText = row.cells[1].textContent.trim();
+                    const rowDateObj = convertToDate(rowDateText);
+
+                    if (startDate && new Date(startDate) > rowDateObj) {
+                        visible = false;
+                    }
+                    if (endDate && new Date(endDate) < rowDateObj) {
+                        visible = false;
+                    }
+                }
+
+                row.style.display = visible ? '' : 'none';
+            });
+
+            // Actualizar totales luego de aplicar filtros
+            actualizarTotales();
+        }
+
+        function actualizarTotales() {
+            let totalDebe = 0;
+            let totalHaber = 0;
+
+            document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const montoSolesText = row.querySelector('td[data-monto1]')?.textContent || '';
+                    const montoDolaresText = row.querySelector('td[data-monto2]')?.textContent || '';
+
+                    // Remove commas and parse
+                    const montoSoles = parseFloat(montoSolesText.replace(/,/g, '')) || 0;
+                    const montoDolares = parseFloat(montoDolaresText.replace(/,/g, '')) || 0;
+
+                    totalDebe += montoSoles;
+                    totalHaber += montoDolares;
+                }
+            });
+
+            const format = n => n.toLocaleString('es-PE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            document.getElementById('totalDebe').value = format(totalDebe);
+            document.getElementById('totalHaber').value = format(totalHaber);
+        }
+
+        function convertToDate(dateString) {
+            if (!dateString) return new Date('1900-01-01');
+            const [day, month, year] = dateString.split('-');
+            return new Date(`${year}-${month}-${day}`);
+        }
+
+        // Calcular totales inicialmente
+        actualizarTotales();
+    });
+
+
+
+
+
+    //ELIMINAR CON MODAL Y FETCH
+    document.addEventListener('DOMContentLoaded', function () {
+        let deleteId = null;
+        const deleteModalEl = document.getElementById('deleteCantaCallaoModal');
+        const deleteModal = new bootstrap.Modal(deleteModalEl);
+        
+        document.querySelectorAll('.btnEliminar').forEach(boton => {
+            boton.addEventListener('click', function () {
+                deleteId = this.getAttribute('data-id');
+                console.log('ID a eliminar:', deleteId);
+            });
+        });
+
+        document.getElementById('confirmDelete').addEventListener('click', async function () {
+            console.log('Botón confirmar clickeado, ID:', deleteId);
+            if (!deleteId) {
+                console.error('No hay ID para eliminar');
+                return;
+            }
+            
+            try {
+                const url = `/costos/gastos/canta-callao/eliminar/${deleteId}/`;
+                console.log('URL:', url);
+                
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+                console.log('CSRF Token:', csrfToken);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Response data:', data);
+                    
+                    deleteModal.hide();
+                    
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+                    
+                    Toast.fire({
+                        icon: "success",
+                        title: "Registro eliminado correctamente"
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    console.error('Error en la respuesta:', response.status);
+                    deleteModal.hide();
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo eliminar el registro.',
+                        icon: 'error',
+                        confirmButtonColor: '#0D1028'
+                    });
+                }
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+                deleteModal.hide();
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Ocurrió un error al eliminar el registro.',
+                    icon: 'error',
+                    confirmButtonColor: '#0D1028'
+                });
+            }
+        });
+    });
+
+    // BTN GUARDAR
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar');
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Previene el submit inmediato
+
+                const form = this.closest('form');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro guardado correctamente"
+                }).then(() => {
+                    form.submit(); // Enviar el formulario después del toast
+                });
+            });
+        });
+    })();
+
+    // BTN ACTUALIZAR
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Previene el submit inmediato
+
+                const form = this.closest('form');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 900,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro actualizado correctamente"
+                }).then(() => {
+                    form.submit(); // Enviar el formulario después del toast
+                });
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

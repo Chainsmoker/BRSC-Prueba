@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% block title %} Lista de Usuarios {% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+<style>
+    .form-control {
+        border-radius: 0.5rem;
+        height: 38px;
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #d8dee9 !important;
+        box-shadow: 0 0 0 0.2rem rgb(226, 242, 242);
+    }
+
+    .table-bordered-gray {
+        border: 1px solid #000;
+        border-collapse: collapse;
+    }
+
+    .table-bordered-gray th,
+    .table-bordered-gray td {
+        border: 1px solid #000;
+    }
+</style>
+
+<div class="container mt-4" style="max-width: 95%;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-11">
+            <center style="font-weight: bold; font-size: 24px; margin-bottom: 1px;">
+                LISTA DE USUARIOS
+            </center>
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <!-- Botón para agregar usuario -->
+                    <center>
+                        <button type="button" class="btn text-white mt-1" style="background-color: #BF0909;"
+                            data-bs-toggle="modal" data-bs-target="#userModal">
+                            <i class="bi bi-plus-lg"></i> Agregar nuevo usuario
+                        </button>
+                    </center>
+
+                    <!-- Modal: Agregar Usuario -->
+                    <div class="modal fade" id="userModal" tabindex="-1">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header text-white" style="background-color: #BF0909;">
+                                    <h5 class="modal-title">Agregar Usuario</h5>
+                                    <button type="button" class="btn-close btn-close-white"
+                                        data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'lista_usuarios' %}">
+                                        {% csrf_token %}
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Nombre</label>
+                                                {{ form.first_name }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Apellidos</label>
+                                                {{ form.last_name }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Nombre de usuario</label>
+                                                {{ form.username }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Email</label>
+                                                {{ form.email }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Teléfono</label>
+                                                {{ form.phone_number }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Perfil</label>
+                                                {{ form.role }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Contraseña</label>
+                                                {{ form.password }}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Repetir Contraseña</label>
+                                                {{ form.confirm_password }}
+                                            </div>
+
+                                        </div>
+                                        <div class="text-center mt-4">
+                                            <button type="submit" class="btn px-5 py-2 btnGuardar"
+                                                style="background-color: #000; color: #fff;">Guardar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Tabla de Usuarios -->
+                    <div class="table-responsive py-2">
+                        <table class="table table-hover table-bordered-gray" id="usersTable">
+                            <thead style="background-color: #000;">
+                                <tr>
+                                    <th class="text-white">Nombre</th>
+                                    <th class="text-white">Apellido</th>
+                                    <th class="text-white">Nombre de usuario</th>
+                                    <th class="text-white">Email</th>
+                                    <th class="text-white">Teléfono</th>
+                                    <th class="text-white">Perfil</th>
+                                    <th class="text-white">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in usuarios %}
+                                <tr>
+                                    <td>{{ user.first_name }}</td>
+                                    <td>{{ user.last_name }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email|default:"" }}</td>
+                                    <td>{{ user.phone_number|default:"" }}</td>
+                                    <td>
+                                        {% if user.role == 1 %}Contabilidad
+                                        {% elif user.role == 2 %}Legal
+                                        {% elif user.role == 3 %}Administrador
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm text-white me-2 btn-editar"
+                                                style="background-color: #26292E;" data-bs-toggle="modal"
+                                                data-bs-target="#editUserModal" data-id="{{ user.id }}"
+                                                data-first_name="{{ user.first_name }}"
+                                                data-last_name="{{ user.last_name }}"
+                                                data-username="{{ user.username }}"
+                                                data-email="{{ user.email|default_if_none:'' }}"
+                                                data-phone_number="{{ user.phone_number|default_if_none:'' }}"
+                                                data-role="{{ user.role }}">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+
+                                            <a href="{% url 'eliminar_usuario' user.id %}"
+                                                class="btn btn-sm text-white btnEliminar me-2"
+                                                style="background-color: #BF0909;">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+
+                                            <button type="button" class="btn btn-sm text-white btn-password"
+                                                style="background-color: #FF6701;" data-bs-toggle="modal"
+                                                data-bs-target="#passwordModal" data-id="{{ user.id }}">
+                                                <i class="bi bi-key"></i>
+                                            </button>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center d-none">
+        <div class="col-12 col-lg-11">
+            <div style="font-weight: bold; font-size: 24px; margin-bottom: 1px; margin-top: 20px;">
+                Lista Centro de costos (2024 - {% now "Y" %})
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <!-- Tabla de CentroDeCostos -->
+                    <div class="table-responsive ">
+                        <table class="table table-striped" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cc in ccs %}
+                                <tr>
+                                    <td>{{ cc.nombre }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm text-white me-2 btn-CCeditar"
+                                                style="background-color: #4c566a;" data-bs-toggle="modal"
+                                                data-bs-target="#editCCModal" data-id="{{ cc.id }}"
+                                                data-nombre="{{ cc.nombre }}">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+
+                                            <a href="{% url 'eliminar_CC' cc.id %}"
+                                                class="btn btn-sm text-white btnCCEliminar me-2"
+                                                style="background-color: #BF0909;">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar Centro Costo -->
+<div class="modal fade" id="editCCModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #BF0909;">
+                <h5 class="modal-title">Editar nombre</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'editar_CC' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="edit_CCid">
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <center><label class="form-label">Nombre</label></center>
+                            <input type="text" class="form-control" name="nombre" id="edit_CCnombre" required>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btnGuardar3"
+                            style="background-color: #3b4252; color: #edeff4;">Actualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Editar Usuario -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #BF0909;">
+                <h5 class="modal-title">Editar Usuario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'editar_usuario' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="edit_id">
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="first_name" id="edit_first_name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" name="last_name" id="edit_last_name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre de usuario</label>
+                            <input type="text" class="form-control" name="username" id="edit_username" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" id="edit_email" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" name="phone_number" id="edit_phone_number">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Rol</label>
+                            <select class="form-control" name="role" id="edit_role" required>
+                                <option value="">Selecciona tipo de perfil</option>
+                                <option value="1">Contabilidad</option>
+                                <option value="2">Legal</option>
+                                <option value="3">Administrador</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btnGuardar2"
+                            style="background-color: #26292E; color: #edeff4;">Actualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal: Cambiar Contraseña -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #3b4252;">
+                <h5 class="modal-title">Cambiar Contraseña</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'cambiar_password_usuario' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="password_user_id">
+
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Contraseña</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmar Contraseña</label>
+                        <input type="password" name="confirm_password" class="form-control" required>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btnGuardar2"
+                            style="background-color: #3b4252; color: #edeff4;">
+                            Guardar Contraseña
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // Editar Centro de Costo
+    document.querySelectorAll('.btn-CCeditar').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('edit_CCid').value = btn.dataset.id;
+            document.getElementById('edit_CCnombre').value = btn.dataset.nombre;
+
+        });
+    });
+    // Llenar modal de edición
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('edit_id').value = btn.dataset.id;
+            document.getElementById('edit_first_name').value = btn.dataset.first_name;
+            document.getElementById('edit_last_name').value = btn.dataset.last_name;
+            document.getElementById('edit_username').value = btn.dataset.username;
+            document.getElementById('edit_email').value = btn.dataset.email;
+            document.getElementById('edit_phone_number').value = btn.dataset.phone_number;
+            document.getElementById('edit_role').value = btn.dataset.role;
+
+            // La contraseña permanece vacía y oculta, solo se modifica si se ingresa una nueva.
+            document.getElementById('edit_password').value = ''; // Mantener el campo vacío
+            document.getElementById('edit_password2').value = ''; // Mantener el campo vacío
+        });
+    });
+
+    // Confirmación eliminar
+    document.querySelectorAll('.btnEliminar').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: '¿Eliminar usuario?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#BF0909',
+                cancelButtonColor: '#000',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    window.location.href = btn.href;
+                }
+            });
+        });
+    });
+
+    // Toast guardar
+    document.querySelectorAll('.btnGuardar, .btnGuardar2, .btnGuardar3').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Guardado correctamente',
+                showConfirmButton: false,
+                timer: 900,
+                timerProgressBar: true,
+            }).then(() => {
+                form.submit();
+            });
+        });
+    });
+
+
+    // LLENAR MODAL CAMBIO DE CONTRASEÑA
+    document.querySelectorAll('.btn-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('password_user_id').value = btn.dataset.id;
+        });
+    });
+
+
+</script>
+
+{% endblock %}

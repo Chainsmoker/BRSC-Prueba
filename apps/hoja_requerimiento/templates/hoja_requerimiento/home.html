@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block link %}
+<li class="nav-item">
+    <a class="nav-link text-white me-2" href="{% url 'home' %}">Inicio</a>
+</li>
+{% endblock %}
+
+{% block body %}
+<style>
+    .card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .card-link .card {
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .card-link:hover .card {
+        background-color: #f1f3f3 !important;
+        transform: scale(1.03);
+        color: #1c536d;
+    }
+</style>
+
+<div class="container text-center" style="padding-top: 30px;">
+    <div style="font-weight: bold; font-size: 24px; margin-bottom: 30px;">
+        Hoja de Requerimientos
+    </div>
+
+    <div class="row justify-content-center">
+        
+        {% for ng in ngs %}
+        <div class="col-12 col-md-3 mb-4">
+            <div class="" style="font-weight: bold; font-size: 18px; color: #0D1028; margin-bottom: 10px;">
+                {{ ng.anio }}
+            </div>
+            <a href="#" class="card-link abrir-modal-opciones"
+            data-bs-toggle="modal"
+            data-bs-target="#opcionesModal"
+            data-anio="{{ ng.anio }}"
+            data-url="{{ ng.url }}">
+                <div class="card h-100 shadow-sm">
+                    <div class="d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <img src="{% static 'images/centro_costos/gastos3.png' %}" alt="Gastos"
+                            style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title"></h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+
+
+        {% if request.user.role == 3 %}
+        <div class="col-6 col-md-3 mb-4">
+            <div class="mb-3" style="font-weight: bold; font-size: 20px; color: #BF0909;">
+                Agregar nuevo
+            </div>
+            <a href="#" class="card-link" id="nuevo-gasto-btn" data-bs-toggle="modal" data-bs-target="#nuevoGastoModal">
+                <div class="h-100">
+                    <div class="d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <img src="{% static 'images/mas.png' %}" alt="Gastos"
+                             style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title"></h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- MODAL 2 OPCIONES -->
+         <div class="modal fade" id="opcionesModal" tabindex="-1" aria-labelledby="opcionesModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header text-white" style="background-color: #BF0909;">
+                        <h5 class="modal-title" id="opcionesModalLabel">Selecciona una opción</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p id="anioSeleccionado" class="mb-4" style="font-weight: bold;"></p>
+                        <a href="#" class="btn btn-secondary me-2" id="opcionA">Quincena 1</a>
+                        <a href="#" class="btn btn-secondary" id="opcionB">Quincena 2</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="nuevoGastoModal" tabindex="-1" aria-labelledby="nuevoGastoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header text-white" style="background-color: #BF0909;">
+                        <h5 class="modal-title" id="nuevoGastoModalLabel">Agregar Nuevo Año</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'centro_costos:agregar_nuevo_gasto' %}">
+                            {% csrf_token %}
+                            <div class="">
+                                <label for="id_nombre" class="form-label">Año</label>
+                                {{ form.anio }}
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn px-5 py-2" style="background-color: #0D1028; color: #fff;">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const botones = document.querySelectorAll('.abrir-modal-opciones');
+
+        botones.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const anio = this.dataset.anio;
+                const baseUrl = this.dataset.url;
+
+                document.getElementById('anioSeleccionado').textContent = `Año seleccionado: ${anio}`;
+
+                // Puedes construir las rutas como quieras, aquí un ejemplo:
+                document.getElementById('opcionA').href = baseUrl + '?opcion=A';
+                document.getElementById('opcionB').href = baseUrl + '?opcion=B';
+            });
+        });
+    });
+</script>
+
+{% endblock %}

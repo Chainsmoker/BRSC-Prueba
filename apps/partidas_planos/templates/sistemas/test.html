@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %} Inteligencia Artificial {% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<style>
+    .form-control {
+        border-radius: 0.5rem;
+        height: 38px;
+    }
+
+    label.form-label {
+        font-weight: 500;
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #d8dee9 !important;
+        box-shadow: 0 0 0 0.2rem rgb(226, 242, 242);
+    }
+
+    .card {
+        border-radius: 1rem;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .section-title {
+        font-weight: bold;
+        font-size: 18px;
+        color: #2e3440;
+        margin-bottom: 10px;
+    }
+
+    .btn-site {
+        border-radius: 2rem;
+        font-weight: bold;
+        background: #000000; /* Negro */
+        color: white;
+        padding: 10px 18px;
+        text-decoration: none;
+        display: block;
+        text-align: center; /* Centrar texto */
+        margin-top: auto; /* Empuja el botón al final */
+        transition: background 0.3s ease;
+    }
+
+    .btn-site:hover {
+        background: #333333; /* Gris oscuro al pasar el mouse */
+        color: white;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-center fw-bold mb-6" style="color:#3b4252; margin-bottom: 80px;">
+        Inteligencia Artificial
+    </h2>
+
+    <div class="row g-4">
+        <!-- Notebook LM -->
+        <div class="col-md-6 col-lg-4 d-flex">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">Notebook LM</h5>
+                <p>Asistente de investigación de Google que trabaja únicamente con la información que proporcionas.</p>
+                <ul class="ms-3">
+                    <li>Subida de documentos: PDF, Google Docs, diapositivas, sitios web y archivos transcritos.</li>
+                    <li>Responde preguntas concretas citando siempre la fuente.</li>
+                    <li>Genera guías de estudio, mapas conceptuales y organiza ideas.</li>
+                </ul>
+                <a href="https://notebooklm.google.com/" target="_blank" class="btn-site">Ir a Notebook LM</a>
+            </div>
+        </div>
+
+        <!-- ChatPDF -->
+        <div class="col-md-6 col-lg-4 d-flex">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">ChatPDF</h5>
+                <p>Herramienta que permite subir documentos y realizar consultas en lenguaje natural.</p>
+                <ul class="ms-3">
+                    <li>Compatible con archivos PDF y documentos Word.</li>
+                    <li>Conversación de chat para comprender y extraer información.</li>
+                    <li>Ideal para entender contratos, reportes financieros y manuales técnicos.</li>
+                </ul>
+                <a href="https://www.chatpdf.com/" target="_blank" class="btn-site">Ir a ChatPDF</a>
+            </div>
+        </div>
+
+        <!-- ElevenLabs -->
+        <div class="col-md-6 col-lg-4 d-flex">
+            <div class="card p-3 h-100">
+                <h5 class="section-title">ElevenLabs</h5>
+                <p>Plataforma de inteligencia artificial especializada en generación y clonación de voz.</p>
+                <ul class="ms-3">
+                    <li>Convierte audio en texto desde formatos como MP3, OGG y otros.</li>
+                    <li>Convierte texto en audio con voces naturales hasta 5000 caractéres.</li>
+                    <li>Soporta múltiples idiomas y acentos.</li>
+                </ul>
+                <a href="https://elevenlabs.io/" target="_blank" class="btn-site">Ir a ElevenLabs</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

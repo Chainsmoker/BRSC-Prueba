@@ -1,0 +1,32 @@
+[project]
+name = "prueba-tecnica-desarrollador-de-software-2025"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "asgiref==3.8.1",
+    "charset-normalizer==3.4.3",
+    "comtypes==1.4.11",
+    "django==5.0.14",
+    "django-ckeditor==6.7.3",
+    "django-js-asset==3.1.2",
+    "django-tinymce==5.0.0",
+    "djangorestframework==3.16.1",
+    "et-xmlfile==2.0.0",
+    "faker>=38.2.0",
+    "mssql-django==1.5",
+    "numpy==2.2.6",
+    "openpyxl==3.1.5",
+    "pandas==2.3.3",
+    "pillow==11.3.0",
+    "pyodbc==5.2.0",
+    "python-dateutil==2.9.0.post0",
+    "pytz==2025.2",
+    "reportlab==4.4.3",
+    "six==1.17.0",
+    "sqlparse==0.5.3",
+    "typing-extensions==4.14.0",
+    "tzdata==2025.2",
+    "faker==38.2.0"
+]

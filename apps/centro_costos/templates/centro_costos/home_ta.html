@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centro_costos/centro_costos_modern.css' %}">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+    <div class="text-center mb-5">
+        <h2 class="display-5 fw-bold" style="color: var(--primary-color);">TUPAC AMARU</h2>
+        <p class="text-muted">Seleccione el periodo</p>
+    </div>
+
+    <div class="row justify-content-center g-4">
+
+        <!-- Periodo 2020-2023 -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <a href="{% url 'centro_costos:lista_gastos' %}" class="text-decoration-none">
+                <div class="card h-100 shadow-hover">
+                    <div class="project-card-img-container">
+                        <img src="{% static 'images/centro_costos/gastos3.png' %}" alt="Gastos"
+                            class="project-card-img">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold mb-0">Periodo (2020-2023)</h5>
+                        <small class="text-muted">Ver detalles</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Periodo 2024-Presente -->
+        <div class="col-12 col-md-6 col-lg-3">
+            {% if proyecto_2024 %}
+            <a href="{% url 'centro_costos:lista_gastos_proyecto' pk=proyecto_2024.pk %}" class="text-decoration-none">
+                {% else %}
+                <a href="#" class="text-decoration-none" onclick="alert('Proyecto no encontrado'); return false;">
+                    {% endif %}
+                    <div class="card h-100 shadow-hover">
+                        <div class="project-card-img-container">
+                            <img src="{% static 'images/centro_costos/gastos3.png' %}" alt="Gastos"
+                                class="project-card-img">
+                        </div>
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold mb-0">Periodo (2024-{% now "Y" %})</h5>
+                            <small class="text-muted">Ver detalles</small>
+                        </div>
+                    </div>
+                </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

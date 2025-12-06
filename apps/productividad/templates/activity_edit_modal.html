@@ -1,0 +1,8 @@
+<h5 class="mb-3">Editar actividad</h5>
+
+<form id="activityEditForm">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="btn btn-primary w-100">Guardar cambios</button>
+</form>

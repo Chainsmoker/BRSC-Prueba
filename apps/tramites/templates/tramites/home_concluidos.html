@@ -1,0 +1,715 @@
+{% extends "base.html" %}
+
+{% block title %} Lista de Trámites {% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #5E7373 0%, #2C3E50 100%);
+        --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        --hover-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .main-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 30px 30px;
+        box-shadow: var(--card-shadow);
+        margin-top: 50px;
+    }
+
+    .filter-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 0.6rem 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #5E7373;
+        box-shadow: 0 0 0 0.2rem rgba(94, 115, 115, 0.15);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #5E7373;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .table-container {
+        border-radius: 15px;
+        overflow: hidden;
+        background: white;
+        box-shadow: var(--card-shadow);
+    }
+
+    .custom-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .custom-table thead th {
+        background: #2C3E50;
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        padding: 1rem;
+        border: none;
+        letter-spacing: 0.5px;
+    }
+
+    .custom-table tbody tr {
+        transition: all 0.2s;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.001);
+    }
+
+    .custom-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: #4a4a4a;
+        font-size: 0.95rem;
+        border: none;
+    }
+
+    .btn-action {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .btn-edit {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .btn-edit:hover {
+        background-color: #1976d2;
+        color: white;
+    }
+
+    .btn-delete {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .btn-delete:hover {
+        background-color: #c62828;
+        color: white;
+    }
+
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 1.5rem;
+    }
+
+    .btn-primary-custom {
+        background: #2C3E50;
+        color: white;
+        border-radius: 10px;
+        padding: 0.6rem 2rem;
+        border: none;
+        transition: all 0.3s;
+    }
+
+    .btn-primary-custom:hover {
+        background: #34495e;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+</style>
+
+<div class="container-fluid px-4 animate-fade-in" style="animation-delay: 0.1s; margin-top: 60px;">
+    <div class="filter-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 fw-bold text-secondary"><i class="bi bi-funnel-fill me-2"></i>Filtros de Búsqueda</h5>
+            <div id="totalExpedientes" class="badge bg-light text-dark border p-2">
+                Total: <span id="expedienteCount" class="fw-bold">{{ caso_judiciales|length }}</span>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">Código</label>
+                <input type="text" class="form-control filter-input" data-column="0" placeholder="Buscar...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tipo de Trámite</label>
+                <select class="form-select filter-input" data-column="3">
+                    <option value="">Todos</option>
+                    {% for esp in especialidades %}
+                    <option value="{{ esp }}">{{ esp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Destinatario</label>
+                <input type="text" class="form-control filter-input" data-column="4" placeholder="Buscar...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Partes</label>
+                <input type="text" class="form-control filter-input" data-column="5" placeholder="Buscar...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Sumilla</label>
+                <input type="text" class="form-control filter-input" data-column="6" placeholder="Buscar...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Responsable</label>
+                <select class="form-select filter-input" data-column="8" id="responsableSelect">
+                    <option value="">Todos</option>
+                    {% for user in usuarios_legales %}
+                    <option value="{{ user.first_name }}">{{ user.first_name }} {{ user.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a href="{% url 'tramites:lista_tramite' %}" id="clearFilters" class="btn btn-light border">
+                    <i class="bi bi-eraser me-2"></i>Limpiar Filtros
+                </a>
+                {% if request.user.role != 1 %}
+                <button type="button" class="btn btn-primary-custom d-none" data-bs-toggle="modal"
+                    data-bs-target="#documentModal">
+                    <i class="bi bi-plus-lg me-2"></i>Nuevo Trámite
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container animate-fade-in" style="animation-delay: 0.2s;">
+        <div class="table-responsive" style="max-height: 70vh;">
+            <table class="table custom-table table-hover" id="documentsTable">
+                <thead style="position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th>Código</th>
+                        <th>Fecha</th>
+                        <th>Actualización</th>
+                        <th>Tipo</th>
+                        <th>Destinatario</th>
+                        <th>Partes</th>
+                        <th>Sumilla</th>
+                        <th class="d-none">Responsable Hidden</th>
+                        <th>Responsable</th>
+                        {% if request.user.role != 1 %}
+                        <th class="text-center">Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cj in caso_judiciales %}
+                    <tr class="clickable-row" data-href="{% url 'tramites:ver_seguimiento_t_concluido' cj.id %}"
+                        data-alerta="{{ cj.alerta_color }}" style="cursor: pointer;">
+                        <td class="fw-bold text-primary">{{ cj.kardex|default:'' }}</td>
+                        <td>{{ cj.fecha|date:"d/m/Y"|default:'' }}</td>
+                        <td>{{ cj.pendiente|default:''|safe }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ cj.tramite_tipo|default:'' }}</span></td>
+                        <td>{{ cj.destinatario|default:"" }}</td>
+                        <td>{{ cj.partes_intervinientes|default:"" }}</td>
+                        <td>{{ cj.sumilla|default:"" }}</td>
+                        <td class="d-none">{{ cj.responsable|default:"" }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                    style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                    {{ cj.responsable2.first_name|first|default:"U" }}
+                                </div>
+                                {{ cj.responsable2.first_name|default:"" }}
+                            </div>
+                        </td>
+
+                        {% if request.user.role != 1 %}
+                        <td class="action-column text-center">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn-action btn-edit btn-editar" data-bs-toggle="modal"
+                                    data-bs-target="#editCasoJudicialModal" data-id="{{ cj.id }}"
+                                    data-pendiente="{{ cj.pendiente }}"
+                                    data-fecha="{{ cj.fecha|date:'Y-m-d'|default_if_none:'' }}"
+                                    data-partes_intervinientes="{{ cj.partes_intervinientes|default_if_none:'' }}"
+                                    data-tramite_tipo="{{ cj.tramite_tipo|default_if_none:'' }}"
+                                    data-descripcion="{{ cj.descripcion|default_if_none:'' }}"
+                                    data-sumilla="{{ cj.sumilla|default_if_none:'' }}"
+                                    data-responsable2="{{ cj.responsable2.id|default_if_none:'' }}"
+                                    data-concluido="{{ cj.concluido|default_if_none:'' }}"
+                                    data-destinatario="{{ cj.destinatario|default_if_none:'' }}" title="Editar">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+
+                                {% if request.user.role == 3 %}
+                                <a href="{% url 'tramites:eliminar_tramite' cj.id %}"
+                                    class="btn-action btn-delete btnEliminar" title="Eliminar">
+                                    <i class="bi bi-trash-fill"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editCasoJudicialModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="editCasoJudicialDialog">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Trámite</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="{% url 'tramites:editar_t_concluido' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="edit_id_fecha" name="fecha" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de trámite</label>
+                            <input type="text" class="form-control" id="edit_id_sumilla_tipo" name="tramite_tipo"
+                                disabled>
+                        </div>
+                        <div class="col-md-4" id="otros_tramite_container" style="display: none;">
+                            <label class="form-label">Especifique</label>
+                            <input type="text" class="form-control" id="otros_tramite" name="otros_tramite" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sumilla</label>
+                            <input type="text" class="form-control" id="edit_id_sumilla" name="sumilla" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Partes intervinientes</label>
+                            <input type="text" class="form-control" id="edit_id_partes_intervinientes"
+                                name="partes_intervinientes" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Destinatario</label>
+                            <input type="text" class="form-control" id="edit_id_destinatario" name="destinatario"
+                                disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Responsable</label>
+                            <select class="form-select" id="edit_responsable2" name="responsable2" disabled>
+                                {% for user in usuarios_legales %}
+                                <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label text-primary">Estado del Trámite</label>
+                            <select class="form-select border-primary" id="edit_concluido" name="concluido">
+                                <option value="True">Activo (En Proceso)</option>
+                                <option value="False">Concluido</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center mt-5">
+                        <button type="submit" class="btn btn-primary-custom px-5 btnGuardar2">
+                            <i class="bi bi-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="documentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="draggableDocumentModal">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-plus me-2"></i>Agregar Nuevo Trámite</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form method="POST" action="{% url 'tramites:lista_tramite' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha</label>
+                            {{ form.fecha }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de trámite</label>
+                            <div class="input-group">
+                                {{ form.resolucion_tipo }}
+                                {{ form.resolucion_texto }}
+                            </div>
+                            {{ form.tramite_tipo }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sumilla</label>
+                            {{ form.sumilla }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Partes intervinientes</label>
+                            {{ form.partes_intervinientes }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Destinatario</label>
+                            {{ form.destinatario }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Responsable</label>
+                            {{ form.responsable2 }}
+                        </div>
+                    </div>
+                    <div class="text-center mt-5">
+                        <button type="submit" class="btn btn-primary-custom px-5 btnGuardar">
+                            <i class="bi bi-save me-2"></i>Guardar Registro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function makeModalDraggable(modalId, dialogId, headerId) {
+        const modal = document.getElementById(modalId);
+        const modalDialog = document.getElementById(dialogId);
+        const modalHeader = document.getElementById(headerId);
+
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        modal.addEventListener('shown.bs.modal', function () {
+            const rect = modalDialog.getBoundingClientRect();
+            modalDialog.style.position = 'fixed';
+            modalDialog.style.top = rect.top + 'px';
+            modalDialog.style.left = rect.left + 'px';
+            modalDialog.style.margin = '0';
+            modalDialog.style.transform = 'none';
+            modalDialog.style.width = rect.width + 'px';
+        });
+
+        modalHeader.addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            const rect = modalDialog.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (isDragging) {
+                modalDialog.style.top = `${e.clientY - offsetY}px`;
+                modalDialog.style.left = `${e.clientX - offsetX}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', function () {
+            isDragging = false;
+        });
+
+        modal.addEventListener('hidden.bs.modal', function () {
+            modalDialog.removeAttribute('style');
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        makeModalDraggable('documentModal', 'draggableDocumentModal', 'documentModalHeader');
+        makeModalDraggable('editCasoJudicialModal', 'editCasoJudicialDialog', 'editCasoJudicialHeader');
+
+        const table = document.getElementById("documentsTable");
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+        function parseCodigo(codigo) {
+            const [numStr, yearStr] = codigo.split("-");
+            const numero = parseInt(numStr, 10);
+            const anio = parseInt(yearStr, 10);
+            return { anio, numero };
+        }
+
+        rows.sort((a, b) => {
+            const codigoA = a.children[0].textContent.trim();
+            const codigoB = b.children[0].textContent.trim();
+
+            const aParsed = parseCodigo(codigoA);
+            const bParsed = parseCodigo(codigoB);
+
+            if (aParsed.anio !== bParsed.anio) {
+                return aParsed.anio - bParsed.anio;
+            } else {
+                return aParsed.numero - bParsed.numero;
+            }
+        });
+
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = document.querySelectorAll(".clickable-row");
+
+        rows.forEach(row => {
+            row.addEventListener("click", function (e) {
+                if (e.target.closest(".action-column") || e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('.btn-group')) {
+                    return;
+                }
+                const url = this.dataset.href;
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', filtrarTabla);
+        });
+
+        function filtrarTabla() {
+            const filtros = {};
+
+            document.querySelectorAll('.filter-input').forEach(input => {
+                const columna = input.dataset.column;
+                const valor = input.value.trim().toLowerCase();
+                if (valor) {
+                    filtros[columna] = valor;
+                }
+            });
+
+            document.querySelectorAll('#documentsTable tbody tr').forEach(fila => {
+                let mostrar = true;
+
+                for (const columna in filtros) {
+                    if (columna === "alerta") continue;
+                    const celda = fila.cells[parseInt(columna)];
+                    if (celda) {
+                        const textoCelda = celda.textContent.trim().toLowerCase();
+                        if (!textoCelda.includes(filtros[columna])) {
+                            mostrar = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (mostrar && filtros["alerta"]) {
+                    const colorFila = fila.dataset.alerta ? fila.dataset.alerta.toLowerCase() : "";
+                    if (colorFila !== filtros["alerta"]) {
+                        mostrar = false;
+                    }
+                }
+                fila.style.display = mostrar ? '' : 'none';
+            });
+        }
+
+        const editButtons = document.querySelectorAll('.btn-editar');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const codigo = button.getAttribute('data-fecha');
+                const partida = button.getAttribute('data-partida');
+                const id = button.getAttribute('data-id');
+
+                document.getElementById('edit_id').value = id;
+                document.getElementById('edit_id_fecha').value = codigo;
+                document.getElementById('edit_id_sumilla').value = button.getAttribute('data-sumilla');
+                document.getElementById('edit_id_partes_intervinientes').value = button.getAttribute('data-partes_intervinientes');
+                document.getElementById('edit_id_sumilla_tipo').value = button.getAttribute('data-tramite_tipo');
+                document.getElementById('edit_responsable2').value = button.getAttribute('data-responsable2');
+                document.getElementById('edit_concluido').value = button.getAttribute('data-concluido');
+                document.getElementById('edit_id_destinatario').value = button.getAttribute('data-destinatario');
+
+                const observacionHtml2 = button.getAttribute('data-pendiente');
+                if (CKEDITOR.instances['edit_id_pendiente']) {
+                    CKEDITOR.instances['edit_id_pendiente'].setData(observacionHtml2 || '');
+                }
+            });
+        });
+    });
+
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar');
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const form = this.closest('form');
+                const campos = form.querySelectorAll("input, select, textarea");
+                let formValido = true;
+
+                campos.forEach(campo => {
+                    if (
+                        campo.offsetParent !== null &&
+                        campo.hasAttribute("required") &&
+                        !campo.value.trim()
+                    ) {
+                        formValido = false;
+                    }
+                });
+
+                if (!formValido) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos incompletos',
+                        text: 'Por favor completa todos los campos obligatorios.',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#5E7373',
+                    });
+                    return;
+                }
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro guardado correctamente"
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    })();
+
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const form = this.closest('form');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro actualizado correctamente"
+                }).then(() => {
+                    form.submit();
+                });
+            });
+        });
+    })();
+
+    (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#5E7373',
+                    cancelButtonColor: '#000000',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const table = document.getElementById("documentsTable");
+        const countSpan = document.getElementById("expedienteCount");
+
+        function updateCount() {
+            const visibleRows = Array.from(table.querySelectorAll("tbody tr"))
+                .filter(row => row.style.display !== "none");
+            countSpan.textContent = visibleRows.length;
+        }
+
+        updateCount();
+
+        document.querySelectorAll(".filter-input").forEach(input => {
+            input.addEventListener("input", updateCount);
+        });
+    });
+</script>
+
+{% endblock %}

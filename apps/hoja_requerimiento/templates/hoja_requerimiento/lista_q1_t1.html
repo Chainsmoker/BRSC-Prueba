@@ -1,0 +1,714 @@
+{% extends "base.html" %}
+{% block title %} Lista general de gastos {% endblock %}
+{% block body %}
+
+<style>
+    .form-control {
+        border-radius: 0.5rem;
+        height: 38px;
+    }
+
+    label.form-label {
+        font-weight: 500;
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #d8dee9 !important;
+        box-shadow: 0 0 0 0.2rem rgb(226, 242, 242);
+    }
+
+    .ver-pdf-btn:hover {
+        text-decoration: underline !important;
+    }
+
+    .fila-seleccionada {
+        background-color: #d8dee9 !important;
+    }
+</style>
+
+<div style="text-align: center; margin-top: 20px;">
+    <div style="font-weight: bold; font-size: 24px; color: #3b4252;">
+        Listado General de {{ nombreN1.nombre }} (2024-{% now "Y" %})
+    </div>
+</div>
+
+<div class="container mt-2" style="max-width: 100%;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-11">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <!-- Sección de búsqueda -->
+                    <h5 class="mb-2">Utiliza los filtros para localizar el documento</h5>
+
+                    <div class="row mb-3">
+                        <!-- Año -->
+                        <div class="col">
+                            <label for="yearFilter" class="form-label">Año</label>
+                            <input 
+                                type="number" 
+                                class="form-control filter-input" 
+                                data-column="1" 
+                                id="yearFilter" 
+                                placeholder="" 
+                                min="2024" 
+                                max="2050"
+                            >
+                        </div>
+                        
+                        <!-- Detalle -->
+                        <div class="col">
+                            <label class="form-label">Código</label>
+                            <input type="text" class="form-control filter-input" data-column="0">
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="col">
+                            <label class="form-label">Referencia</label>
+                            <input type="text" class="form-control filter-input" data-column="3">
+                        </div>
+
+                        <!-- Ubicación -->
+                        <div class="col">
+                            <label class="form-label">Actividad</label>
+                            <input type="text" class="form-control filter-input" data-column="4">
+                        </div>
+
+                        <!-- Costo -->
+                        <div class="col">
+                            <label class="form-label text-nowrap">Tipo de gasto</label>
+                            <input type="text" class="form-control filter-input" data-column="5">
+                        </div>
+
+                        <!-- Fecha Inicio -->
+                        <div class="col">
+                            <label class="form-label">Fecha Inicio</label>
+                            <input type="date" class="form-control filter-input" data-column="1" id="startDateFilter"
+                                placeholder="Fecha Inicio">
+                        </div>
+
+                        <!-- Fecha Final -->
+                        <div class="col">
+                            <label class="form-label">Fecha Final</label>
+                            <input type="date" class="form-control filter-input" data-column="1" id="endDateFilter"
+                                placeholder="Fecha Final">
+                        </div>
+
+                        <!-- Botón Limpiar Filtros -->
+                        <div class="col">
+                            <label class="form-label" style="color: #ffffff;">Limpiar</label>
+                            <a href="{% url 'centro_costos:lista_gastoN1' %}" id="clearFilters"
+                                class="form-control btn btn-secondary text-center"
+                                style="background-color: {% if request.user.role == 3 %}#BF0909{% elif request.user.role == 2 %}#5e81ac{% else %}#3b4252{% endif %}; border: none; line-height: 25px;">Limpiar Filtros</a>
+                        </div>
+
+                        <div class="col">
+                            <label class="form-label" style="color: #ffffff;">Excel</label>
+                            <button id="exportBtn" class="btn btn-success form-control btn btn-secondary text-center"
+                                style="background-color: {% if request.user.role == 3 %}#BF0909{% elif request.user.role == 2 %}#5e81ac{% else %}#3b4252{% endif %}; line-height: 25px; border: none;">
+                                <i class="bi-file-earmark-excel"></i>
+                                Exportar excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Totales -->
+                    <div class="row mb-1">
+                        <div class="col">
+                            <label class="form-label">Total Soles (S)</label>
+                            <input type="text" id="totalDebe" class="form-control" disabled>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Total Dólares ($)</label>
+                            <input type="text" id="totalHaber" class="form-control" disabled>
+                        </div>
+                    </div>
+
+                    <!-- Botón para abrir el modal de agregar -->
+                    {% if request.user.role != 1 and request.user.role != 2 %}
+                    <center>
+                        <button type="button" class="btn text-white mt-4" style="background-color: #BF0909;"
+                            data-bs-toggle="modal" data-bs-target="#documentModal">
+                            <i class="bi bi-plus-lg"></i> Agregar Nuevo Gasto
+                        </button>
+                    </center>
+                    {% endif %}
+
+                    <!-- Modal para agregar nueva gasto general -->
+                    <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header text-white" style="background-color: #BF0909;">
+                                    <h5 class="modal-title" id="documentModalLabel">Agregar Nuevo Gasto</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'centro_costos:lista_gastoN1' %}"
+                                        enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="container">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label for="id_codigo" class="form-label">Código</label>
+                                                    {{ form.codigo }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_fecha" class="form-label">Fecha</label>
+                                                    {{ form.fecha }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_detalle" class="form-label">Detalle</label>
+                                                    {{ form.detalle }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_referencia" class="form-label">Referencia</label>
+                                                    {{ form.referencia }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_monto_soles" class="form-label">Monto (S)</label>
+                                                    {{ form.monto_soles }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_monto_dolares" class="form-label">Monto ($)</label>
+                                                    {{ form.monto_dolares }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_actividad" class="form-label">Actividad</label>
+                                                    {{ form.actividad }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_tipo_gasto" class="form-label">Tipo de gasto</label>
+                                                    {{ form.tipo_gasto }}
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="id_pdf" class="form-label">Archivo PDF</label>
+                                                    {{ form.pdf }}
+                                                </div>
+                                            </div>
+                                            <div class="text-center mt-4">
+                                                <button type="submit" class="btn px-5 py-2 btnGuardar"
+                                                    style="background-color: #BF0909; color: #edeff4;">Guardar</button>
+
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Tabla -->
+                    <div class="table-container" style="max-height: 55vh; overflow-y: auto; overflow-x: auto;">
+                        <table class="table table-striped" id="documentsTable">
+                            <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Fecha</th>
+                                    <th>Detalle</th>
+                                    <th>Referencia</th>
+                                    <th>Actividad</th>
+                                    <th>Tipo de gasto</th>
+                                    <th>Monto(S)</th>
+                                    <th>Monto($)</th>
+                                    <th>PDF</th>
+                                    {% if request.user.role != 1 and request.user.role != 2 %}
+                                    <th>Acciones</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for gg in gasto_general %}
+                                <tr>
+                                    <td class="text-nowrap">{{ gg.codigo }}</td>
+                                    <td class="text-nowrap">{{ gg.fecha|date:"d-m-Y" }}</td>
+                                    <td>{{ gg.detalle|default:"" }}</td>
+                                    <td>{{ gg.referencia|default:"" }}</td>
+                                    <td>{{ gg.actividad|default:"" }}</td>
+                                    <td>{{ gg.tipo_gasto|default:"" }}</td>
+                                    <td data-monto1>{{ gg.monto_soles|default:"" }}</td>
+                                    <td data-monto2>{{ gg.monto_dolares|default:"" }}</td>
+                                    <td>
+                                        {% if gg.pdf %}
+                                        <button type="button"
+                                            style="background: none; border: none; color: #BF0909; text-decoration: none; cursor: pointer;"
+                                            data-bs-toggle="modal" data-bs-target="#pdfViewerModal"
+                                            data-pdf-url="{{ gg.pdf.url }}" class="ver-pdf-btn">
+                                            Ver PDF
+                                        </button>
+                                        {% else %}
+                                        No disponible
+                                        {% endif %}
+                                    </td>
+
+                                    {% if request.user.role != 1 and request.user.role != 2 %}
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm text-white me-2 btn-editar"
+                                                style="background-color: #434c5e;" data-bs-toggle="modal"
+                                                data-bs-target="#editGastoGeneralModal" data-id="{{ gg.id }}"
+                                                data-codigo="{{ gg.codigo }}"
+                                                data-fecha="{{ gg.fecha|date:'Y-m-d' }}"
+                                                data-detalle="{{ gg.detalle }}"
+                                                data-referencia="{{ gg.referencia }}" data-pdf="{{ gg.pdf }}"
+                                                data-monto_soles="{{ gg.monto_soles }}"
+                                                data-monto_dolares="{{ gg.monto_dolares }}"
+                                                data-actividad="{{ gg.actividad }}"
+                                                data-tipo_gasto="{{ gg.tipo_gasto }}"
+                                                data-pdf="{{ gg.pdf }}">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+
+                                            <a href="{% url 'centro_costos:eliminar_gastoN1' gg.id %}"
+                                                class="btn btn-sm text-white btnEliminar"
+                                                style="background-color: #BF0909;" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Modal para ver PDF -->
+                    <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                            <div class="modal-content" style="background-color: #3b4252">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" style="color: #eceff4;">Visualizar documento PDF</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"
+                                        style="background-color: #BF0909;"></button>
+                                </div>
+                                <div class="modal-body" style="height: 80vh;">
+                                    <iframe id="pdfIframe" src="" width="100%" height="100%"
+                                        style="border: none;"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal para editar partida -->
+                    <div class="modal fade" id="editGastoGeneralModal" tabindex="-1" aria-labelledby="editGastoGeneralModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header text-white" style="background-color: #3b4252;">
+                                    <h5 class="modal-title" id="editGastoGeneralModalLabel">Editar Gasto</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'centro_costos:editar_gastoN1' %}"
+                                        enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <input type="hidden" id="edit_id" name="id">
+                                        <div class="container">
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_codigo" class="form-label">Código</label>
+                                                    <input type="text" class="form-control" id="edit_id_codigo"
+                                                        name="codigo">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_fecha" class="form-label">Fecha</label>
+                                                    <input type="date" class="form-control" id="edit_id_fecha"
+                                                        name="fecha">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_detalle" class="form-label">Detalle</label>
+                                                    <input type="text" class="form-control" id="edit_id_detalle"
+                                                        name="detalle">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_referencia"
+                                                        class="form-label">Referencia</label>
+                                                    <input type="text" class="form-control" id="edit_id_referencia"
+                                                        name="referencia">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_monto_soles" class="form-label">Monto (S)</label>
+                                                    <input type="number" class="form-control" id="edit_id_monto_soles" name="monto_soles">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_ubicacion" class="form-label">Monto ($)</label>
+                                                    <input type="number" class="form-control" id="edit_id_monto_dolares"
+                                                        name="monto_dolares">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_actividad" class="form-label">Actividad</label>
+                                                    <input type="text" class="form-control" id="edit_id_actividad"
+                                                        name="actividad">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="edit_id_tipo_gasto" class="form-label">Tipo de gasto</label>
+                                                    <input type="text" class="form-control" id="edit_id_tipo_gasto"
+                                                        name="tipo_gasto">
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <label for="edit_id_pdf" class="form-label">Archivo PDF</label>
+                                                    <input type="file" class="form-control" id="edit_id_pdf" name="pdf">
+                                                </div>
+                                            </div>
+                                            <div class="text-center mt-4">
+                                                <button type="submit" class="btn px-5 py-2 btnGuardar2"
+                                                    style="background-color: #3b4252; color: #edeff4;">Guardar</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                        // EXPORTAR EXCEL
+                        document.getElementById("exportBtn").addEventListener("click", function () {
+                            const table = document.getElementById("documentsTable");
+                            const rows = [];
+
+                            // Obtener encabezados, excluyendo "PDF" y "Acciones"
+                            const headers = [];
+                            table.querySelectorAll("thead th").forEach((th) => {
+                                const headerText = th.innerText.trim();
+                                if (headerText !== "Acciones" && headerText !== "PDF") {
+                                    headers.push(headerText);
+                                }
+                            });
+                            rows.push(headers);
+
+                            let totalSoles = 0;
+                            let totalDolares = 0;
+
+                            // Obtener filas visibles, excluyendo columnas "PDF" y "Acciones"
+                            table.querySelectorAll("tbody tr").forEach(tr => {
+                                if (tr.style.display !== "none") {
+                                    const row = [];
+                                    const cells = tr.querySelectorAll("td");
+                                    let skipIndexes = [];
+
+                                    // Determinar qué índices son "PDF" y "Acciones"
+                                    table.querySelectorAll("thead th").forEach((th, index) => {
+                                        const headerText = th.innerText.trim();
+                                        if (headerText === "PDF" || headerText === "Acciones") {
+                                            skipIndexes.push(index);
+                                        }
+                                    });
+
+                                    cells.forEach((cell, index) => {
+                                        if (!skipIndexes.includes(index)) {
+                                            let cellText = cell.innerText.trim();
+                                            row.push(cellText);
+
+                                            // Sumar montos
+                                            if (cell.hasAttribute('data-monto1')) {
+                                                totalSoles += parseFloat(cellText.replace(',', '')) || 0;
+                                            }
+                                            if (cell.hasAttribute('data-monto2')) {
+                                                totalDolares += parseFloat(cellText.replace(',', '')) || 0;
+                                            }
+                                        }
+                                    });
+
+                                    rows.push(row);
+                                }
+                            });
+
+                            // Agregar fila vacía
+                            rows.push([]);
+
+                            // Agregar fila de totales
+                            const totalRow = Array(headers.length).fill('');
+                            totalRow[headers.indexOf('Monto (S)')] = 'Total: ' + totalSoles.toFixed(2);
+                            totalRow[headers.indexOf('Monto ($)')] = 'Total: ' + totalDolares.toFixed(2);
+                            rows.push(totalRow);
+
+                            // Crear hoja de cálculo
+                            const worksheet = XLSX.utils.aoa_to_sheet(rows);
+                            const workbook = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(workbook, worksheet, "Documentos");
+
+                            // Aplicar autofiltro
+                            const range = XLSX.utils.decode_range(worksheet['!ref']);
+                            worksheet['!autofilter'] = { ref: XLSX.utils.encode_range(range) };
+
+                            XLSX.writeFile(workbook, "documento.xlsx");
+                        });
+
+
+                        // FILAS RESALTADAS
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const filas = document.querySelectorAll('#documentsTable tbody tr');
+
+                            filas.forEach(fila => {
+                                fila.addEventListener('click', function () {
+                                    // Si ya está seleccionada, la quitamos
+                                    if (this.classList.contains('fila-seleccionada')) {
+                                        this.classList.remove('fila-seleccionada');
+                                    } else {
+                                        // Primero quitamos la clase de todas las filas
+                                        filas.forEach(f => f.classList.remove('fila-seleccionada'));
+                                        // Luego la agregamos a la que se hizo click
+                                        this.classList.add('fila-seleccionada');
+                                    }
+                                });
+                            });
+                        });
+
+                        //ORDENAT POR CODIGO
+                        document.addEventListener("DOMContentLoaded", function () {
+                        const table = document.getElementById("documentsTable");
+                        const tbody = table.querySelector("tbody");
+                        const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                        // Nueva función para códigos tipo "TA-001-24"
+                        function parseCodigo(codigo) {
+                            const partes = codigo.split("-");
+                            const numero = parseInt(partes[1], 10); // "001" → 1
+                            const anio = parseInt(partes[2], 10);   // "24" → 24
+                            return { anio, numero };
+                        }
+
+                        rows.sort((a, b) => {
+                            const codigoA = a.children[0].textContent.trim();
+                            const codigoB = b.children[0].textContent.trim();
+
+                            const aParsed = parseCodigo(codigoA);
+                            const bParsed = parseCodigo(codigoB);
+
+                            // Ordenar primero por año, luego por número
+                            if (aParsed.anio !== bParsed.anio) {
+                                return aParsed.anio - bParsed.anio;
+                            } else {
+                                return aParsed.numero - bParsed.numero;
+                            }
+                        });
+
+                        // Reemplazar el contenido del tbody
+                        tbody.innerHTML = "";
+                        rows.forEach(row => tbody.appendChild(row));
+                    });
+
+                        
+                        //PDF MODAL
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const pdfModal = document.getElementById('pdfViewerModal');
+                            const iframe = document.getElementById('pdfIframe');
+
+                            pdfModal.addEventListener('show.bs.modal', function (event) {
+                                const button = event.relatedTarget;
+                                const pdfUrl = button.getAttribute('data-pdf-url');
+                                iframe.src = pdfUrl;
+                            });
+
+                            pdfModal.addEventListener('hidden.bs.modal', function () {
+                                iframe.src = '';
+                            });
+
+                            // FILTRO EN TIEMPO REAL
+                            document.querySelectorAll('.filter-input').forEach(input => {
+                                input.addEventListener('input', filterTable);
+                                input.addEventListener('change', filterTable); 
+                            });
+
+                            function filterTable() {
+                                const filters = {};
+
+                                // Recolectar valores no vacíos de inputs que NO son fechas
+                                document.querySelectorAll('.filter-input').forEach(input => {
+                                    const columnIndex = input.dataset.column;
+                                    const value = input.value.trim().toLowerCase();
+
+                                    if (input.type !== 'date' && value) { 
+                                        filters[columnIndex] = value;
+                                    }
+                                });
+
+                                document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
+                                    let visible = true;
+
+                                    // Filtros de texto
+                                    for (const columnIndex in filters) {
+                                        const cell = row.cells[columnIndex];
+                                        if (!cell || !cell.textContent.toLowerCase().includes(filters[columnIndex])) {
+                                            visible = false;
+                                            break;
+                                        }
+                                    }
+
+                                    // Filtros de fecha
+                                    if (visible) {
+                                        const startDate = document.getElementById('startDateFilter').value;
+                                        const endDate = document.getElementById('endDateFilter').value;
+                                        const rowDateText = row.cells[1].textContent.trim(); 
+                                        const rowDateObj = convertToDate(rowDateText);
+
+                                        if (startDate && new Date(startDate) > rowDateObj) {
+                                            visible = false;
+                                        }
+                                        if (endDate && new Date(endDate) < rowDateObj) {
+                                            visible = false;
+                                        }
+                                    }
+
+                                    row.style.display = visible ? '' : 'none';
+                                });
+
+                                // Actualizar totales luego de aplicar filtros
+                                actualizarTotales();
+                            }
+
+                            function actualizarTotales() {
+                                let totalDebe = 0;
+                                let totalHaber = 0;
+
+                                document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
+                                    if (row.style.display !== 'none') {
+                                        const montoSoles = parseFloat(row.querySelector('td[data-monto1]')?.textContent.replace(',', '.') || 0);
+                                        const montoDolares = parseFloat(row.querySelector('td[data-monto2]')?.textContent.replace(',', '.') || 0);
+
+                                        totalDebe += isNaN(montoSoles) ? 0 : montoSoles;
+                                        totalHaber += isNaN(montoDolares) ? 0 : montoDolares;
+                                    }
+                                });
+
+                                document.getElementById('totalDebe').value = totalDebe.toFixed(2);
+                                document.getElementById('totalHaber').value = totalHaber.toFixed(2);
+                            }
+                            function convertToDate(dateString) {
+                                if (!dateString) return new Date('1900-01-01');
+                                const [day, month, year] = dateString.split('-');
+                                return new Date(`${year}-${month}-${day}`);
+                            }
+
+                            // Calcular totales inicialmente
+                            actualizarTotales();
+
+                            // EDITAR REGISTRO
+                            const editButtons = document.querySelectorAll('.btn-editar');
+                            editButtons.forEach(button => {
+                                button.addEventListener('click', function () {
+                                    const codigo = button.getAttribute('data-codigo');
+                                    const partida = button.getAttribute('data-partida');
+                                    const id = button.getAttribute('data-id');
+                                    console.log("Código:", codigo);
+                                    console.log("Partida:", partida);
+                                    console.log("Id:", id);
+                                    document.getElementById('edit_id').value = button.getAttribute('data-id');
+                                    document.getElementById('edit_id_codigo').value = button.getAttribute('data-codigo');
+                                    document.getElementById('edit_id_fecha').value = button.getAttribute('data-fecha');
+                                    document.getElementById('edit_id_detalle').value = button.getAttribute('data-detalle');
+                                    document.getElementById('edit_id_referencia').value = button.getAttribute('data-referencia');
+                                    document.getElementById('edit_id_monto_soles').value = button.getAttribute('data-monto_soles');
+                                    document.getElementById('edit_id_monto_dolares').value = button.getAttribute('data-monto_dolares');
+                                    document.getElementById('edit_id_actividad').value = button.getAttribute('data-actividad');
+                                    document.getElementById('edit_id_tipo_gasto').value = button.getAttribute('data-tipo_gasto');
+                                    document.getElementById('edit_id_pdf').value = button.getAttribute('data-pdf');
+                                });
+                            });
+                        });
+
+
+                        //ALERT ELIMINAR
+                        (function () {
+                            const botonesEliminar = document.querySelectorAll('.btnEliminar');
+
+                            botonesEliminar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Evita que el enlace se siga inmediatamente
+
+                                    Swal.fire({
+                                        title: '¿Estás seguro de eliminar?',
+                                        text: "Esta acción no se puede deshacer.",
+                                        icon: 'warning',
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#BF0909',
+                                        cancelButtonColor: '#5e81ac',
+                                        confirmButtonText: 'Sí, eliminar',
+                                        cancelButtonText: 'Cancelar'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            // Redirige al href del botón
+                                            window.location.href = this.href;
+                                        }
+                                    });
+                                });
+                            });
+                        })();
+
+                        // BTN GUARDAR
+                        (function () {
+                            const botonesGuardar = document.querySelectorAll('.btnGuardar');
+
+                            botonesGuardar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Previene el submit inmediato
+
+                                    const form = this.closest('form');
+
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: "top-end",
+                                        showConfirmButton: false,
+                                        timer: 800,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.onmouseenter = Swal.stopTimer;
+                                            toast.onmouseleave = Swal.resumeTimer;
+                                        }
+                                    });
+
+                                    Toast.fire({
+                                        icon: "success",
+                                        title: "Registro guardado correctamente"
+                                    }).then(() => {
+                                        form.submit(); // Enviar el formulario después del toast
+                                    });
+                                });
+                            });
+                        })();
+
+                        // BTN ACTUALIZAR
+                        (function () {
+                            const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+                            botonesGuardar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Previene el submit inmediato
+
+                                    const form = this.closest('form');
+
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: "top-end",
+                                        showConfirmButton: false,
+                                        timer: 1000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.onmouseenter = Swal.stopTimer;
+                                            toast.onmouseleave = Swal.resumeTimer;
+                                        }
+                                    });
+
+                                    Toast.fire({
+                                        icon: "success",
+                                        title: "Registro actualizado correctamente"
+                                    }).then(() => {
+                                        form.submit(); // Enviar el formulario después del toast
+                                    });
+                                });
+                            });
+                        })();
+                    </script>
+
+                    {% endblock %}

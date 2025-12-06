@@ -1,0 +1,567 @@
+{% extends "./base.html" %}
+{% load static %}
+
+{% block body %}
+{% include "./components/navbar.html" %}
+
+<style>
+    .welcome-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        padding: 3rem 1rem;
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 3rem;
+        color: white;
+        box-shadow: var(--shadow-md);
+        position: relative;
+        overflow: hidden;
+        margin-top: 50px;
+    }
+
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+
+    .welcome-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+
+    .area-card {
+        background: white;
+        border-radius: 20px;
+        border: none;
+        box-shadow: var(--shadow-md);
+        height: 100%;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .area-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .area-header {
+        background: var(--light-bg);
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        font-family: 'Playfair Display', serif;
+        font-weight: 700;
+        color: var(--primary-color);
+        text-align: center;
+        letter-spacing: 1px;
+        font-size: 1.1rem;
+    }
+
+    .item-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+
+    .item-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem 1rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .item-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .item-card:hover {
+        border-color: var(--accent-color);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .item-card:hover::after {
+        opacity: 1;
+    }
+
+    .item-icon-wrapper {
+        height: 80px;
+        width: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .item-card:hover .item-icon-wrapper {
+        transform: scale(1.1) rotate(3deg);
+    }
+
+    .item-icon {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    .item-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        color: var(--dark-text);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.4;
+    }
+
+    .main-footer {
+        background: white;
+        padding: 2rem 0;
+        margin-top: 4rem;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    .social-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--light-bg);
+        color: var(--primary-color);
+        transition: all 0.3s ease;
+        margin: 0 0.5rem;
+    }
+
+    .social-link:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-3px);
+    }
+
+    .modal-content {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        padding: 1.5rem;
+    }
+
+    .btn-modal-option {
+        background-color: #5E7373;
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60px;
+    }
+
+    .btn-modal-option:hover {
+        background-color: #4a5c5c;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+</style>
+
+<div class="welcome-section fade-in-up">
+    <div class="container">
+        <div class="welcome-content">
+            <h1 class="welcome-title">¡Bienvenido, {{ request.user.first_name }}!</h1>
+            <p class="mb-0 opacity-75">Sistema Documental Interno</p>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5 fade-in-up" style="animation-delay: 0.1s;">
+    {% if request.user.role == 3 or request.user.is_superuser %}
+    <div class="row g-4 justify-content-center">
+        <!-- Área Administrativa -->
+        <div class="col-12 col-lg-4">
+            <div class="area-card h-100">
+                <div class="area-header">
+                    <i class="bi bi-building-gear me-2"></i>ÁREA ADMINISTRATIVA
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'lista_usuarios' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/usuarios.png' %}" alt="Usuarios"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Usuarios</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'asistencia:home' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/asistencias.png' %}" alt="Asistencias"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Asistencias</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="https://docs.google.com/spreadsheets/d/1cHz8n_jF01dB6KiXj4duUEdzZSLPalYe/edit?usp=drive_link&ouid=108451795403321451259&rtpof=true&sd=true"
+                                target="_blank" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/canta_callao.png' %}" alt="Pagos"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Control de Pagos</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área Legal -->
+        <div class="col-12 col-lg-4">
+            <div class="area-card h-100">
+                <div class="area-header">
+                    <i class="bi bi-briefcase me-2"></i>ÁREA LEGAL
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'control_expediente:lista_expediente' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/control_expedientes.png' %}" alt="Expedientes"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Expedientes</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'tramites:lista_tramite' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/tramites.png' %}" alt="Trámites"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Trámites</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'control_expediente:lista_carpeta_fiscal' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/expedientes_penales.png' %}" alt="Penales"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Exp. Penales</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'tramites:lista_tramite_concluidos' %}" class="item-link"
+                                data-bs-toggle="modal" data-bs-target="#modalExpedientesConcluidos">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/expedientes_concluidos.png' %}"
+                                            alt="Concluidos" class="item-icon">
+                                    </div>
+                                    <span class="item-title">Concluidos</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área Documentación -->
+        <div class="col-12 col-lg-4">
+            <div class="area-card h-100">
+                <div class="area-header">
+                    <i class="bi bi-folder2-open me-2"></i>ÁREA DOCUMENTACIÓN
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'lista_partidas' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/partidas.png' %}" alt="Partidas"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Partidas</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'lista_planos' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/planos_otros.png' %}" alt="Planos"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Planos y Otros</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-12">
+                            <a href="{% url 'centro_costos:home' %}" class="item-link">
+                                <div class="item-card flex-row px-4">
+                                    <div class="item-icon-wrapper mb-0 me-3" style="width: 60px; height: 60px;">
+                                        <img src="{% static 'images/home/costos.png' %}" alt="Costos" class="item-icon">
+                                    </div>
+                                    <span class="item-title text-start">Centro de Costos</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="row g-4 justify-content-center">
+        <!-- Información Personal -->
+        <div class="col-12 col-lg-4">
+            <div class="area-card h-100">
+                <div class="area-header">
+                    <i class="bi bi-person-badge me-2"></i>INFORMACIÓN PERSONAL
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <a href="{% url 'perfil_user' %}" class="item-link">
+                                <div class="item-card flex-row px-4">
+                                    <div class="item-icon-wrapper mb-0 me-3" style="width: 60px; height: 60px;">
+                                        <img src="{% static 'images/home/perfil.png' %}" alt="Perfil" class="item-icon">
+                                    </div>
+                                    <span class="item-title">Mi Perfil</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-12">
+                            <a href="{% url 'asistencia:home' %}" class="item-link">
+                                <div class="item-card flex-row px-4">
+                                    <div class="item-icon-wrapper mb-0 me-3" style="width: 60px; height: 60px;">
+                                        <img src="{% static 'images/home/asistencias.png' %}" alt="Asistencias"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Mi Registro de Asistencias</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área Legal -->
+        <div class="col-12 col-lg-4">
+            <div class="area-card h-100">
+                <div class="area-header">
+                    <i class="bi bi-briefcase me-2"></i>ÁREA LEGAL
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'control_expediente:lista_expediente' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/control_expedientes.png' %}" alt="Expedientes"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Expedientes</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="#" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/tramites.png' %}" alt="Trámites"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Trámites</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'control_expediente:lista_carpeta_fiscal' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/expedientes_penales.png' %}" alt="Penales"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Exp. Penales</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'tramites:lista_tramite_concluidos' %}" class="item-link"
+                                data-bs-toggle="modal" data-bs-target="#modalExpedientesConcluidos">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/expedientes_concluidos.png' %}"
+                                            alt="Concluidos" class="item-icon">
+                                    </div>
+                                    <span class="item-title">Concluidos</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área Documentación -->
+        <div class="col-12 col-lg-4">
+            <div class="area-card h-100">
+                <div class="area-header">
+                    <i class="bi bi-folder2-open me-2"></i>ÁREA DOCUMENTACIÓN
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <a href="{% url 'lista_partidas' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/partidas.png' %}" alt="Partidas"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Partidas</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'lista_planos' %}" class="item-link">
+                                <div class="item-card">
+                                    <div class="item-icon-wrapper">
+                                        <img src="{% static 'images/home/planos_otros.png' %}" alt="Planos"
+                                            class="item-icon">
+                                    </div>
+                                    <span class="item-title">Planos y Otros</span>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-12">
+                            <a href="{% url 'centro_costos:home' %}" class="item-link">
+                                <div class="item-card flex-row px-4">
+                                    <div class="item-icon-wrapper mb-0 me-3" style="width: 60px; height: 60px;">
+                                        <img src="{% static 'images/home/costos.png' %}" alt="Costos" class="item-icon">
+                                    </div>
+                                    <span class="item-title text-start">Centro de Costos</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalExpedientesConcluidos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="bi bi-archive-fill me-2"></i>Expedientes y Trámites Concluidos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <p class="mb-4 text-muted">Seleccione el tipo de documento que desea consultar</p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                    <a href="{% url 'control_expediente:lista_concluidos' %}"
+                        class="btn-modal-option text-decoration-none">
+                        Exp. General
+                    </a>
+                    <a href="{% url 'control_expediente:lista_concluidos_fiscal' %}"
+                        class="btn-modal-option text-decoration-none">
+                        Exp. Penal
+                    </a>
+                    <a href="{% url 'tramites:lista_tramite_concluidos' %}"
+                        class="btn-modal-option text-decoration-none">
+                        Trámites
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="main-footer text-center">
+    <div class="container">
+        <p class="mb-3 text-muted fw-medium">
+            &copy; {{ current_year }} Sistema Documental Interno (SDI) v1.4<br>
+            <span class="text-primary">Bienes Raíces Santa Clara S.A.C.</span>
+        </p>
+        <div class="d-flex justify-content-center">
+            <a href="https://brsantaclara.com/" target="_blank" class="social-link" title="Sitio Web">
+                <i class="bi bi-globe"></i>
+            </a>
+            <a href="https://www.youtube.com/@BienesRaicesSantaclara" target="_blank" class="social-link"
+                title="YouTube">
+                <i class="bi bi-youtube"></i>
+            </a>
+            <a href="https://www.linkedin.com/company/bienes-raices-santa-clara-s-a-c/" target="_blank"
+                class="social-link" title="LinkedIn">
+                <i class="bi bi-linkedin"></i>
+            </a>
+        </div>
+    </div>
+</footer>
+
+{% endblock %}

@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<!-- FULLCALENDAR -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/locales-all.global.min.js"></script>
+
+<style>
+    /* Contenedor general */
+    .calendar-wrapper {
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Ajustes visuales */
+    #calendar {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    #user-select {
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    /* Evitar espacios vacíos */
+    .fc-scrollgrid,
+    .fc-view-harness {
+        height: auto !important;
+    }
+
+    /* CABECERA DE LOS DÍAS (LUN, MAR, MIÉ...) */
+    .fc-col-header-cell {
+        background-color: #000 !important;
+        color: #fff !important;
+        border: none !important;
+    }
+    .fc-col-header-cell-cushion {
+        color: #fff !important;
+        font-weight: bold;
+        text-decoration: none !important;
+    }
+
+    /* CELDAS DEL CALENDARIO — DÍAS NEGROS */
+    .fc-daygrid-day {
+        background-color: #ffff !important;
+        border: 1px solid #d4d4d4 !important;
+    }
+
+    /* TEXTO DE LOS NÚMEROS DEL DÍA EN BLANCO */
+    .fc-daygrid-day-number {
+        color: #000 !important;
+        text-decoration: none !important; /* sin subrayado */
+    }
+
+    /* QUITAR SUBRAYADO GENERAL */
+    a {
+        text-decoration: none !important;
+    }
+
+    /* HOVER: resaltado al pasar el mouse */
+    .fc-daygrid-day:hover {
+        background-color: #f1f1f1 !important;
+        cursor: pointer;
+    }
+
+    .form-control {
+        border-radius: 0.5rem;
+        height: 38px;
+    }
+
+    label.form-label {
+        font-weight: 500;
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #d8dee9 !important;
+        box-shadow: 0 0 0 0.2rem rgb(226, 242, 242);
+    }
+
+    .ver-pdf-btn:hover {
+        text-decoration: underline !important;
+    }
+
+    .fila-seleccionada {
+        background-color: #d8dee9 !important;
+    }
+    
+</style>
+
+
+<div class="container-fluid mt-3">
+    <div class="row">
+
+        <!-- 📌 COLUMNA IZQUIERDA (Tabla Registro Actividades) -->
+        <div class="col-12 col-lg-6 mb-3">
+
+            <div style="text-align: center; margin-top: 10px;">
+                <div style="font-weight: bold; font-size: 22px; color: #3b4252;">
+                    REGISTRO DE ACTIVIDADES
+                </div>
+            </div>
+
+<div class="row mb-3">
+    <!-- Fecha Desde -->
+    <div class="col">
+        <label class="form-label">Desde</label>
+        <input type="date" class="form-control" id="fechaDesde">
+    </div>
+
+    <!-- Fecha Hasta -->
+    <div class="col">
+        <label class="form-label">Hasta</label>
+        <input type="date" class="form-control" id="fechaHasta">
+    </div>
+
+    <!-- Nombre -->
+    <div class="col">
+        <label class="form-label">Nombre</label>
+        {% if request.user.role == 3 %}
+        <!-- ADMIN (role = 3) → puede elegir -->
+        <select id="user-select" class="form-select filter-input" data-column="1">
+            <option value="">Todos</option>
+            {% for usuario in usuarios %}
+            <option value="{{ usuario.id }}">
+                {{ usuario.first_name }} {{ usuario.last_name }}
+            </option>
+            {% endfor %}
+        </select>
+
+    {% else %}
+        <!-- USUARIO NORMAL → solo ve su propio nombre, bloqueado -->
+        <select id="user-select" class="form-select filter-input" data-column="1" disabled>
+            <option value="{{ request.user.id }}" selected>
+                {{ request.user.first_name }} {{ request.user.last_name }}
+            </option>
+        </select>
+    {% endif %}
+    </div>
+
+
+
+    <!-- Actividad -->
+    <div class="col">
+        <label class="form-label">Actividad</label>
+        <input type="text" class="form-control filter-input" data-column="2">
+    </div>
+
+    <!-- Botón Limpiar Filtros -->
+    <div class="col">
+        <label class="form-label" style="color: #ffffff;">Limpiar</label>
+        <a href="{% url 'control_expediente:lista_registros_actividad' %}" id="clearFilters"
+            class="form-control btn btn-secondary text-center"
+            style="background-color: {% if request.user.role == 3 %}#BF0909{% elif request.user.role == 2 %}#0995AD{% else %}#3b4252{% endif %}; border: none; line-height: 25px;">
+            Limpiar Filtros
+        </a>
+    </div>
+</div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <!-- Tabla scrollable -->
+                    <div style="max-height: 70vh; overflow-y: auto;">
+                        <div class="table-container" style="max-height: 55vh; overflow-y: auto; overflow-x: auto;">
+                        <table class="table table-hover" id="documentsTable">
+                            <thead class="" style="position: sticky; top: 0; z-index: 1;">
+                                <tr style="background-color: #000;">
+                                    <th style="color: white;">FECHA</th>
+                                    <th class="d-none" style="color: white;">ID</th>
+                                    <th style="color: white;">NOMBRE</th>
+                                    <th style="color: white;">ACTIVIDAD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+    {% for cj in registro_actividad %}
+    <tr>
+        <td>{{ cj.fecha|date:"d/m/Y h:i:s A" }}</td>
+        <td class="d-none">{{ cj.user_id }}</td>
+        <td>{{ cj.nombre }}</td>
+        <td>{{ cj.actividad }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+
+                        </table>
+                    </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 📌 COLUMNA DERECHA (CALENDARIO) -->
+        <div class="col-12 col-lg-6 mb-3">
+
+            <div class="calendar-wrapper">
+
+                <h2 style="text-align:center;">CALENDARIO</h2>
+
+                
+
+
+                <div id="calendar" style="width: 100%;"></div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- modal placeholder -->
+<div id="modal-placeholder"></div>
+
+<!-- MODAL PARA ACTIVIDADES -->
+<div class="modal fade" id="activityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Crear nueva actividad</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body" id="modal-body-content">
+        <!-- Aquí se cargará el formulario por AJAX -->
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const tabla = document.getElementById("documentsTable");
+    if (!tabla) return;
+
+    const filas = Array.from(tabla.querySelectorAll("tbody tr"));
+
+    const fechaDesdeInput = document.getElementById("fechaDesde");
+    const fechaHastaInput = document.getElementById("fechaHasta");
+    // Selecciono por data-column según tu HTML: select usa data-column="1" (ID)
+    const selectID = document.querySelector('select[data-column="1"]');
+    // En el HTML que pegaste, el input actividad tiene data-column="2" (NOMBRE en tabla es 2, ACTIVIDAD es 3)
+    // Si tu input actividad realmente está en data-column="2" entonces corregimos el selector:
+    const inputActividad = document.querySelector('input[data-column="2"]') || document.querySelector('input[data-column="3"]');
+
+    // Escuchar cambios
+    if (fechaDesdeInput) fechaDesdeInput.addEventListener("input", aplicarFiltros);
+    if (fechaHastaInput) fechaHastaInput.addEventListener("input", aplicarFiltros);
+    if (selectID) selectID.addEventListener("change", aplicarFiltros);
+    if (inputActividad) inputActividad.addEventListener("input", aplicarFiltros);
+
+    function aplicarFiltros() {
+        const desde = fechaDesdeInput ? fechaDesdeInput.value : "";
+        const hasta = fechaHastaInput ? fechaHastaInput.value : "";
+        const filtroID = selectID ? String(selectID.value).trim() : "";
+        const filtroActividad = inputActividad ? inputActividad.value.toLowerCase().trim() : "";
+
+        filas.forEach(fila => {
+            const celdas = fila.querySelectorAll("td");
+
+            const textoFechaRaw = celdas[0]?.textContent.trim() || "";
+            const textoID = celdas[1]?.textContent.trim() || "";
+            const textoNombre = celdas[2]?.textContent.trim().toLowerCase() || "";
+            const textoActividad = celdas[3]?.textContent.trim().toLowerCase() || "";
+
+            // Extraer dd/mm/yyyy aunque la celda tenga también hora (ej: "26/11/2025 05:30:00 PM")
+            const fechaMatch = textoFechaRaw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            const fechaFormateada = fechaMatch ? `${fechaMatch[3]}-${fechaMatch[2]}-${fechaMatch[1]}` : null; // YYYY-MM-DD
+
+            let mostrar = true;
+
+            if (fechaFormateada) {
+                if (desde && fechaFormateada < desde) mostrar = false;
+                if (hasta && fechaFormateada > hasta) mostrar = false;
+            }
+
+            // FILTRO POR ID (select) - comparar como string
+            if (filtroID) {
+                // Si textoID contiene algo extra (ej. "  12 "), igualará tras trim.
+                if (textoID !== filtroID) mostrar = false;
+            }
+
+            // FILTRO POR ACTIVIDAD (busca coincidencia parcial; si quieres exacto cambiar a ===)
+            if (filtroActividad) {
+                // Intentamos buscar en la columna ACTIVIDAD; si está vacía, intentamos en NOMBRE por si hay confusión de columnas
+                const campoActividadParaBuscar = textoActividad || textoNombre;
+                if (!campoActividadParaBuscar.includes(filtroActividad)) mostrar = false;
+            }
+
+            fila.style.display = mostrar ? "" : "none";
+        });
+    }
+
+    // (Opcional) aplicar filtros al cargar por si hay valores por defecto
+    aplicarFiltros();
+});
+
+
+function closeAllModals() {
+    document.querySelectorAll(".modal.show").forEach(m => {
+        const modalInstance = bootstrap.Modal.getInstance(m);
+        if (modalInstance) modalInstance.hide();
+    });
+
+    // Limpia cualquier backdrop duplicado
+    document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+    document.body.classList.remove("modal-open");
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    let currentUser = '';
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'es',
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        contentHeight: 'auto',
+        expandRows: true,
+        dayMaxEventRows: true,
+
+        dateClick: function(info) {
+            closeAllModals(); // ← evita doble modal
+
+            fetch(`/productivity/activity/form-ajax/?date=${info.dateStr}`, {
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("modal-body-content").innerHTML = data.html;
+
+                const modalElement = document.getElementById("activityModal");
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+
+                const form = document.getElementById("activityForm");
+                form.addEventListener("submit", function(e){
+                    e.preventDefault();
+
+                    const formData = new FormData(form);
+
+                    fetch(`/productivity/activity/add/?date=${info.dateStr}`, {
+                        method: "POST",
+                        body: formData,
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    })
+                    .then(res => res.json())
+                    .then(response => {
+                        if (response.success) {
+                            closeAllModals();   // ← cierre seguro
+                            calendar.refetchEvents();
+                        } else {
+                            alert("Corrige los errores del formulario");
+                        }
+                    });
+                });
+            });
+        },
+
+        events: function(fetchInfo, successCallback, failureCallback) {
+            let url = '/productivity/api/events/';
+            if (currentUser) url += `?user_id=${currentUser}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => failureCallback(error));
+        }
+    });
+
+    calendar.render();
+
+    const userSelect = document.getElementById('user-select');
+    if (userSelect) {
+        userSelect.addEventListener('change', function(e) {
+            currentUser = e.target.value;
+            calendar.refetchEvents();
+        });
+    }
+});
+
+
+// -------------------------
+//  MODAL DE EDITAR
+// -------------------------
+document.addEventListener("click", function(e) {
+    if (e.target.classList.contains("edit-btn")) {
+        const id = e.target.getAttribute("data-id");
+
+        closeAllModals(); // ← IMPORTANTÍSIMO
+
+        fetch(`/productivity/activity/${id}/edit-ajax/`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("modal-body-content").innerHTML = data.html;
+
+            const modalElement = document.getElementById("activityModal");
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            const form = document.getElementById("activityEditForm");
+            form.addEventListener("submit", function(ev){
+                ev.preventDefault();
+
+                const formData = new FormData(form);
+
+                fetch(`/productivity/activity/${id}/edit-ajax/`, {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                })
+                .then(r => r.json())
+                .then(response => {
+                    if (response.success) {
+                        closeAllModals();   // ← cierre seguro
+                        calendar.refetchEvents();
+                    } else {
+                        alert("Revisa el formulario");
+                    }
+                });
+            });
+        });
+    }
+});
+</script>
+
+
+{% endblock %}

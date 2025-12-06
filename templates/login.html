@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Iniciar sesión
+{% endblock %}
+
+{% block body %}
+
+<style>
+    .forgot-link {
+        color: #0D1028;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .forgot-link:hover {
+        font-weight: bold;
+        color: #b00000c3;
+        outline: none;
+    }
+</style>
+
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% now "Y" as current_year %}
+<main class="d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card p-4 shadow mb-4">
+        <div class="text-center mb-4">
+            <img src="{% static 'images/login.png' %}" alt="Logo" class="img-fluid" style="height: 90px" />
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            {% if error %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endif %}
+            <div class="mb-3">
+                <label style="font-weight: bold;">NOMBRE DE USUARIO</label>
+                <input type="text" id="userField" name="username" class="form-control" autocomplete="off" required />
+            </div>
+
+            <div class="mb-4 password-wrapper">
+                <label style="font-weight: bold;">CONTRASEÑA</label>
+                <input type="password" id="passwordField" name="password" class="form-control" required />
+                <span class="toggle-password" style="margin-top: -17px">
+                    <i class="bi bi-eye" id="toggleIcon" aria-hidden="true"></i>
+                </span>
+                <div class="" style="text-align: right; margin-top: 10px">
+                    <a href="{% url 'forgot_password' %}" class="forgot-link">¿Olvidó su contraseña?</a>
+                </div>
+            </div>
+
+            <div class="d-grid gap-1" style="margin-top: -20px;">
+                <button type="submit" class="btn" style="background-color: #000 !important;">Ingresar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center w-100 text-white"
+        style="position: fixed; bottom: 0; left: 0; right: 0; padding: 20px 10px; ">
+        <p style="margin-bottom: 10px; font-weight: bold;">
+            &copy; {{ current_year }} Sistema Documental Interno (SDI) v1.4 – Todos los derechos reservados<br>
+            Bienes Raíces Santa Clara S.A.C.
+        </p>
+
+        <div style="font-size: 1.5rem;">
+            <a href="https://brsantaclara.com/" target="_blank" style="text-decoration: none">
+                <i class="bi bi-globe" style="color: #fff;"></i>
+            </a>
+            <a href="https://www.youtube.com/@BienesRaicesSantaclara" target="_blank" style="text-decoration: none"
+                class="ms-3">
+                <i class="bi bi-youtube" style="color: #fff;"></i>
+            </a>
+            <a href="https://www.linkedin.com/company/bienes-raices-santa-clara-s-a-c/" target="_blank"
+                style="text-decoration: none" class="ms-3">
+                <i class="bi bi-linkedin" style="color: #fff;"></i>
+            </a>
+        </div>
+    </footer>
+
+</main>
+
+<!-- JavaScript para alternar visibilidad de la contraseña -->
+<script>
+    const passwordField = document.getElementById("passwordField");
+    const togglePassword = document.getElementById("toggleIcon");
+
+    togglePassword.addEventListener("click", function () {
+        const type =
+            passwordField.getAttribute("type") === "password" ? "text" : "password";
+        passwordField.setAttribute("type", type);
+        this.classList.toggle("bi-eye");
+        this.classList.toggle("bi-eye-slash");
+    });
+</script>
+
+{% endblock %}

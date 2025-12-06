@@ -1,0 +1,330 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #e8ebef;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2c3e50;
+}
+
+.container-fluid {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.card {
+    background: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+}
+
+.card-header.bg-dark {
+    background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.card-body.bg-light {
+    background-color: #f8f9fa !important;
+    padding: 2rem;
+}
+
+.text-primary-custom {
+    color: #2c3e50 !important;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary-custom {
+    background-color: #3a5a78;
+    border: none;
+    color: white;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom:hover {
+    background-color: #2c4558;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.table-modern {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    border-collapse: collapse;
+}
+
+.table-modern thead th {
+    background-color: #3a5a78;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+    padding: 0.8rem 0.6rem;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.table-modern tbody td {
+    padding: 0.8rem 0.6rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    color: #2c3e50;
+    background-color: white;
+    font-size: 0.85rem;
+}
+
+.table-modern tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-modern tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table-modern tbody tr.table-active {
+    background-color: #e8f4f8;
+    font-weight: 600;
+}
+
+.table-modern tfoot tr {
+    background-color: #e8ebef;
+    font-weight: 700;
+}
+
+.table-modern tfoot td {
+    padding: 1rem 0.6rem;
+    color: #2c3e50;
+    border-top: 2px solid #3a5a78;
+}
+
+.table-responsive {
+    border-radius: 0 0 8px 8px;
+    overflow-x: auto;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #3a5a78;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #2c4558;
+}
+
+.badge {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.badge.bg-secondary {
+    background-color: #7f8c8d !important;
+}
+
+.btn-sm {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+.btn-outline-dark {
+    border: 1px solid #2c3e50;
+    color: #2c3e50;
+}
+
+.btn-outline-dark:hover {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.btn-outline-danger {
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+}
+
+.btn-outline-danger:hover {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-group {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.btn-link {
+    color: #3a5a78;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.btn-link:hover {
+    color: #2c4558;
+}
+
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: none;
+    padding: 1.2rem 1.5rem;
+}
+
+.card-header-primary {
+    background: linear-gradient(135deg, #3a5a78, #2c4558);
+    color: white;
+}
+
+.modal-header .modal-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.form-control {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    border-color: #3a5a78;
+    box-shadow: 0 0 0 0.2rem rgba(58, 90, 120, 0.15);
+    outline: none;
+}
+
+.form-select {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+.form-select:focus {
+    border-color: #3a5a78;
+    box-shadow: 0 0 0 0.2rem rgba(58, 90, 120, 0.15);
+    outline: none;
+}
+
+.gastos-contenido {
+    background-color: #ffffff;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.gastos-contenido table {
+    font-size: 0.8rem;
+}
+
+.gastos-contenido .table-light th {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    font-weight: 600;
+    padding: 0.7rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.gastos-contenido tbody td {
+    padding: 0.7rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.toggle-gastos-btn {
+    cursor: pointer;
+}
+
+.fila-seleccionada {
+    background-color: #e8f4f8 !important;
+}
+
+.text-nowrap {
+    white-space: nowrap;
+}
+
+.shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12) !important;
+}
+
+.g-3 {
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .table-modern {
+        font-size: 0.75rem;
+    }
+
+    .table-modern thead th {
+        font-size: 0.7rem;
+        padding: 0.6rem 0.4rem;
+    }
+
+    .table-modern tbody td {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-primary-custom {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+}

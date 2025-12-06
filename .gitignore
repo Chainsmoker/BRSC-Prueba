@@ -1,0 +1,12 @@
+# Entorno Virtual
+.venv
+venv
+.temporal
+statictfiles
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+
+# INIT APP
+django_deploy.bat
+django_deploy.vbs

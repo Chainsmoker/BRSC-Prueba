@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block title %} Lista de general de gastos {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centro_costos/centro_costos_modern.css' %}">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container-fluid px-4 py-4">
+    <div class="text-center mb-4">
+        <h3 class="fw-bold" style="color: var(--primary-color);">CENTRO DE COSTOS {{ nombreN9.nombre }}</h3>
+    </div>
+
+    <!-- Sección de búsqueda -->
+    <div class="filter-section">
+        <h5 class="mb-3 fw-bold text-secondary">Filtros de Búsqueda</h5>
+        <div class="row g-3">
+            <!-- Año -->
+            <div class="col-md-2">
+                <label for="anioSelect" class="form-label">Año</label>
+                <select class="form-select filter-input" data-column="0" id="anioSelect">
+                    <option value="">Seleccionar año</option>
+                    {% for anio in anios %}
+                    <option value="{{ anio }}">{{ anio }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Expedientes -->
+            <div class="col-md-3">
+                <label for="expedienteSelect" class="form-label">Expedientes</label>
+                <select class="form-select filter-input" data-column="1" id="expedienteSelect">
+                    <option value="">Seleccionar todo</option>
+                    {% for exp in expedientes_unicos %}
+                    <option value="{{ exp }}">{{ exp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Demandante -->
+            <div class="col-md-3">
+                <label class="form-label">Demandante</label>
+                <input type="text" class="form-control filter-input" data-column="3" placeholder="Buscar demandante...">
+            </div>
+
+            <!-- Demandado -->
+            <div class="col-md-2">
+                <label class="form-label">Demandado</label>
+                <input type="text" class="form-control filter-input" data-column="4" placeholder="Buscar demandado...">
+            </div>
+
+            <!-- Materia -->
+            <div class="col-md-2">
+                <label class="form-label">Materia</label>
+                <input type="text" class="form-control filter-input" data-column="5" placeholder="Buscar materia...">
+            </div>
+
+            <!-- Fechas -->
+            <div class="col-md-2">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control filter-input" data-column="0" id="startDateFilter">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Fecha Final</label>
+                <input type="date" class="form-control filter-input" data-column="0" id="endDateFilter">
+            </div>
+
+            <!-- Botones -->
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{% url 'centro_costos:lista_gastoN9' %}" id="clearFilters" class="btn btn-secondary w-100">
+                    Limpiar
+                </a>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button id="exportBtn" class="btn btn-success w-100">
+                    <i class="bi-file-earmark-excel"></i> Excel
+                </button>
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-accent px-4 py-2" data-bs-toggle="modal"
+                data-bs-target="#documentModal">
+                <i class="bi bi-plus-lg"></i> Agregar Nuevo Gasto
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Totales -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">TOTAL SOLES (S/)</label>
+                    <input type="text" id="totalDebe" class="form-control fw-bold" disabled
+                        style="background-color: #e8f5e9; color: #2e7d32;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">TOTAL DÓLARES (US$)</label>
+                    <input type="text" id="totalHaber" class="form-control fw-bold" disabled
+                        style="background-color: #e3f2fd; color: #1565c0;">
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-responsive" style="max-height: 65vh;">
+                <table class="table table-modern table-hover" id="documentsTable">
+                    <thead style="position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th>FECHA</th>
+                            <th>EXPEDIENTE</th>
+                            <th class="d-none">JUZGADO</th>
+                            <th>DEMANDANTE</th>
+                            <th>DEMANDADO</th>
+                            <th>MATERIA</th>
+                            <th class="d-none">ESCRITO</th>
+                            <th>CONCEPTO</th>
+                            <th>MONTO(S/)</th>
+                            <th>MONTO($)</th>
+                            <th class="d-none">PDF</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for gg in gasto_general %}
+                        <tr>
+                            <td class="text-nowrap">{{ gg.fecha|date:"d/m/Y" }}</td>
+                            <td>{{ gg.expediente|default_if_none:"" }}</td>
+                            <td class="d-none">{{ gg.juzgado|default_if_none:"" }}</td>
+                            <td>{{ gg.demandante|default_if_none:"" }}</td>
+                            <td>{{ gg.demandado|default_if_none:"" }}</td>
+                            <td>{{ gg.materia|default_if_none:"" }}</td>
+                            <td class="d-none">{{ gg.escrito|default_if_none:"" }}</td>
+                            <td>{{ gg.concepto|default_if_none:"" }}</td>
+                            <td data-monto1 class="text-end">{{ gg.monto_soles|default_if_none:""|intcomma }}</td>
+                            <td data-monto2 class="text-end">{{ gg.monto_dolares|default_if_none:""|intcomma }}</td>
+                            <td class="d-none">
+                                {% if gg.pdf %}
+                                <button type="button" class="btn btn-link btn-sm p-0 text-accent" data-bs-toggle="modal"
+                                    data-bs-target="#pdfViewerModal" data-pdf-url="{{ gg.pdf.url }}">
+                                    Ver PDF
+                                </button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-dark me-1 btn-editar"
+                                        data-bs-toggle="modal" data-bs-target="#editGastoGeneralModal"
+                                        data-id="{{ gg.id }}" data-expediente="{{ gg.expediente|default_if_none:'' }}"
+                                        data-juzgado="{{ gg.juzgado|default_if_none:'' }}"
+                                        data-demandante="{{ gg.demandante|default_if_none:'' }}"
+                                        data-demandado="{{ gg.demandado|default_if_none:'' }}"
+                                        data-materia="{{ gg.materia|default_if_none:'' }}"
+                                        data-fecha="{{ gg.fecha|date:'Y-m-d' }}"
+                                        data-escrito="{{ gg.escrito|default_if_none:'' }}"
+                                        data-concepto="{{ gg.concepto|default_if_none:'' }}" data-pdf="{{ gg.pdf }}"
+                                        data-monto_soles="{{ gg.monto_soles|default_if_none:'' }}"
+                                        data-monto_dolares="{{ gg.monto_dolares|default_if_none:'' }}">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <a href="{% url 'centro_costos:eliminar_gastoN9' gg.id %}"
+                                        class="btn btn-sm btn-outline-danger btnEliminar" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar nueva gasto general -->
+<div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentModalLabel">Agregar Nuevo Gasto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'centro_costos:lista_gastoN9' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">EXPEDIENTE</label>
+                                {{ form.expediente }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">JUZGADO</label>
+                                {{ form.juzgado }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">DEMANDANTE</label>
+                                {{ form.demandante }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">DEMANDADO</label>
+                                {{ form.demandado }}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="id_fecha" class="form-label">FECHA</label>
+                                {{ form.fecha }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">MATERIA</label>
+                                {{ form.materia }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">ESCRITO</label>
+                                {{ form.escrito }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CONCEPTO</label>
+                                {{ form.concepto }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_monto_soles" class="form-label">MONTO (S/)</label>
+                                {{ form.monto_soles }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_monto_dolares" class="form-label">MONTO ($)</label>
+                                {{ form.monto_dolares }}
+                            </div>
+                            <div class="col-md-4 d-none">
+                                <label for="id_pdf" class="form-label">Archivo PDF</label>
+                                {{ form.pdf }}
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-accent px-5 py-2 btnGuardar">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver PDF -->
+<div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white">Visualizar documento PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0" style="height: 80vh;">
+                <iframe id="pdfIframe" src="" width="100%" height="100%" style="border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar partida -->
+<div class="modal fade" id="editGastoGeneralModal" tabindex="-1" aria-labelledby="editGastoGeneralModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editGastoGeneralModalLabel">Editar Gasto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'centro_costos:editar_gastoN9' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">EXPEDIENTE</label>
+                                <input type="text" class="form-control" id="edit_expediente" name="expediente">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">JUZGADO</label>
+                                <input type="text" class="form-control" id="edit_juzgado" name="juzgado">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">DEMANDANTE</label>
+                                <input type="text" class="form-control" id="edit_demandante" name="demandante">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">DEMANDADO</label>
+                                <input type="text" class="form-control" id="edit_demandado" name="demandado">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">MATERIA</label>
+                                <input type="text" class="form-control" id="edit_materia" name="materia">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">FECHA</label>
+                                <input type="date" class="form-control" id="edit_fecha" name="fecha">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">ESCRITO</label>
+                                <input type="text" class="form-control" id="edit_escrito" name="escrito">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">CONCEPTO</label>
+                                <input type="text" class="form-control" id="edit_concepto" name="concepto">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">MONTO (S/)</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_monto_soles"
+                                    name="monto_soles">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">MONTO ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="edit_monto_dolares"
+                                    name="monto_dolares">
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-none">
+                            <label for="edit_id_pdf" class="form-label">Archivo PDF</label>
+                            <input type="file" class="form-control" id="edit_id_pdf" name="pdf">
+                            <div id="edit_pdf_link" class="mt-2"></div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary px-5 py-2 btnGuardar2">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // EXPORTAR EXCEL
+    document.getElementById("exportBtn").addEventListener("click", function () {
+        const table = document.getElementById("documentsTable");
+        const rows = [];
+
+        // ✅ Encabezados (excluyendo PDF y Acciones)
+        const headers = [];
+        const skipIndexes = [];
+        table.querySelectorAll("thead th").forEach((th, index) => {
+            const headerText = th.innerText.trim();
+            if (headerText !== "Acciones" && headerText !== "PDF") {
+                headers.push(headerText);
+            } else {
+                skipIndexes.push(index);
+            }
+        });
+        rows.push(headers);
+
+        let totalSoles = 0;
+        let totalDolares = 0;
+
+        // ✅ Filas visibles
+        table.querySelectorAll("tbody tr").forEach(tr => {
+            if (tr.style.display !== "none") {
+                const row = [];
+                const cells = tr.querySelectorAll("td");
+
+                cells.forEach((cell, index) => {
+                    if (!skipIndexes.includes(index)) {
+                        let cellText = cell.innerText.trim();
+                        row.push(cellText);
+
+                        // ✅ Sumar montos si corresponde
+                        if (cell.hasAttribute('data-monto1')) {
+                            totalSoles += parseFloat(cellText.replace(',', '')) || 0;
+                        }
+                        if (cell.hasAttribute('data-monto2')) {
+                            totalDolares += parseFloat(cellText.replace(',', '')) || 0;
+                        }
+                    }
+                });
+
+                rows.push(row);
+            }
+        });
+
+        // ✅ Fila vacía + totales
+        rows.push([]);
+        const totalRow = Array(headers.length).fill('');
+        const solesIndex = headers.indexOf('MONTO(S/)') !== -1 ? headers.indexOf('MONTO(S/)') : headers.indexOf('Monto(S/)');
+        const dolaresIndex = headers.indexOf('MONTO($)') !== -1 ? headers.indexOf('MONTO($)') : headers.indexOf('Monto($)');
+
+        if (solesIndex !== -1) totalRow[solesIndex] = 'Total: ' + totalSoles.toFixed(2);
+        if (dolaresIndex !== -1) totalRow[dolaresIndex] = 'Total: ' + totalDolares.toFixed(2);
+        rows.push(totalRow);
+
+        // ✅ Crear y exportar Excel
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Documentos");
+
+        // ✅ Aplicar autofiltro
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        worksheet['!autofilter'] = { ref: XLSX.utils.encode_range(range) };
+
+        XLSX.writeFile(workbook, "documento.xlsx");
+    });
+
+
+    //PDF MODAL
+    document.addEventListener('DOMContentLoaded', function () {
+        const pdfModal = document.getElementById('pdfViewerModal');
+        const iframe = document.getElementById('pdfIframe');
+
+        pdfModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const pdfUrl = button.getAttribute('data-pdf-url');
+            iframe.src = pdfUrl;
+        });
+
+        pdfModal.addEventListener('hidden.bs.modal', function () {
+            iframe.src = '';
+        });
+
+        // FILTRO EN TIEMPO REAL
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', filterTable);
+            input.addEventListener('change', filterTable);
+        });
+
+        function filterTable() {
+            const filters = {};
+
+            // Recolectar valores no vacíos de inputs que NO son fechas
+            document.querySelectorAll('.filter-input').forEach(input => {
+                const columnIndex = input.dataset.column;
+                const value = input.value.trim().toLowerCase();
+
+                if (input.type !== 'date' && value) {
+                    filters[columnIndex] = value;
+                }
+            });
+
+            document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
+                let visible = true;
+
+                // Filtros de texto
+                for (const columnIndex in filters) {
+                    const cell = row.cells[columnIndex];
+                    if (!cell || !cell.textContent.toLowerCase().includes(filters[columnIndex])) {
+                        visible = false;
+                        break;
+                    }
+                }
+
+                // Filtros de fecha
+                if (visible) {
+                    const startDate = document.getElementById('startDateFilter').value;
+                    const endDate = document.getElementById('endDateFilter').value;
+                    const rowDateText = row.cells[0].textContent.trim();
+                    const rowDateObj = convertToDate(rowDateText);
+
+                    if (startDate && new Date(startDate) > rowDateObj) {
+                        visible = false;
+                    }
+                    if (endDate && new Date(endDate) < rowDateObj) {
+                        visible = false;
+                    }
+                }
+
+                row.style.display = visible ? '' : 'none';
+            });
+
+            // Actualizar totales luego de aplicar filtros
+            actualizarTotales();
+        }
+
+        function parseNumber(text) {
+            if (!text && text !== 0) return 0;
+            text = String(text).trim();
+
+            // eliminar espacios no separables y caracteres no numéricos salvo . , y -
+            text = text.replace(/\u00A0/g, '').replace(/[^0-9.,-]/g, '');
+
+            if (text === '') return 0;
+
+            const hasComma = text.indexOf(',') !== -1;
+            const hasDot = text.indexOf('.') !== -1;
+
+            if (hasComma && hasDot) {
+                // ejemplo "1,000.00" -> coma = miles, quitar comas
+                text = text.replace(/,/g, '');
+            } else if (hasComma && !hasDot) {
+                // ejemplo "22,50" -> coma = decimal
+                text = text.replace(/,/g, '.');
+            }
+            const n = parseFloat(text);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function actualizarTotales() {
+            let totalDebe = 0;
+            let totalHaber = 0;
+
+            document.querySelectorAll('#documentsTable tbody tr').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const montoSolesText = row.querySelector('td[data-monto1]')?.textContent || '';
+                    const montoDolaresText = row.querySelector('td[data-monto2]')?.textContent || '';
+
+                    const montoSoles = parseNumber(montoSolesText);
+                    const montoDolares = parseNumber(montoDolaresText);
+
+                    // ✅ Ahora sumamos los montos
+                    totalDebe += montoSoles;
+                    totalHaber += montoDolares;
+                }
+            });
+
+            const format = n => n.toLocaleString('es-PE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            document.getElementById('totalDebe').value = format(totalDebe);
+            document.getElementById('totalHaber').value = format(totalHaber);
+        }
+
+        function convertToDate(dateString) {
+            if (!dateString) return null;
+
+            // Si viene con "/" (ej: "01/09/2025")
+            if (dateString.includes('/')) {
+                const [day, month, year] = dateString.split('/');
+                return new Date(`${year}-${month}-${day}`);
+            }
+
+            // Si viene con "-" (ej: "01-09-2025")
+            if (dateString.includes('-')) {
+                const [day, month, year] = dateString.split('-');
+                return new Date(`${year}-${month}-${day}`);
+            }
+
+            // Último recurso, intentar parsear directo
+            return new Date(dateString);
+        }
+
+
+        // Calcular totales inicialmente
+        actualizarTotales();
+
+        // EDITAR REGISTRO
+        const editButtons = document.querySelectorAll('.btn-editar');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const codigo = button.getAttribute('data-codigo');
+                const partida = button.getAttribute('data-partida');
+                const id = button.getAttribute('data-id');
+                console.log("Código:", codigo);
+                console.log("Partida:", partida);
+                console.log("Id:", id);
+                document.getElementById('edit_id').value = button.getAttribute('data-id');
+                document.getElementById('edit_expediente').value = button.getAttribute('data-expediente');
+                document.getElementById('edit_juzgado').value = button.getAttribute('data-juzgado');
+                document.getElementById('edit_demandante').value = button.getAttribute('data-demandante');
+                document.getElementById('edit_demandado').value = button.getAttribute('data-demandado');
+                document.getElementById('edit_materia').value = button.getAttribute('data-materia');
+                document.getElementById('edit_fecha').value = button.getAttribute('data-fecha');
+                document.getElementById('edit_escrito').value = button.getAttribute('data-escrito');
+                document.getElementById('edit_concepto').value = button.getAttribute('data-concepto');
+                document.getElementById('edit_monto_soles').value = button.getAttribute('data-monto_soles');
+                document.getElementById('edit_monto_dolares').value = button.getAttribute('data-monto_dolares');
+                document.getElementById('edit_id_pdf').value = button.getAttribute('data-pdf');
+            });
+        });
+    });
+
+
+    //ALERT ELIMINAR
+    (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Evita que el enlace se siga inmediatamente
+
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#E88700',
+                    cancelButtonColor: '#000',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirige al href del botón
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    // BTN GUARDAR
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar');
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Previene el submit inmediato
+
+                const form = this.closest('form');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 800,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro guardado correctamente"
+                }).then(() => {
+                    form.submit(); // Enviar el formulario después del toast
+                });
+            });
+        });
+    })();
+
+    // BTN ACTUALIZAR
+    (function () {
+        const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+        botonesGuardar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Previene el submit inmediato
+
+                const form = this.closest('form');
+
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.onmouseenter = Swal.stopTimer;
+                        toast.onmouseleave = Swal.resumeTimer;
+                    }
+                });
+
+                Toast.fire({
+                    icon: "success",
+                    title: "Registro actualizado correctamente"
+                }).then(() => {
+                    form.submit(); // Enviar el formulario después del toast
+                });
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

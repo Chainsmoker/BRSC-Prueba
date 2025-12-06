@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centro_costos/centro_costos_modern.css' %}">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+    <div class="text-center mb-5">
+        <h2 class="display-5 fw-bold" style="color: var(--primary-color);">Módulo Centro de Costos</h2>
+        <p class="text-muted">Gestión integral de gastos y proyectos</p>
+    </div>
+
+    <div class="row justify-content-center g-4">
+        <!-- Tupac Amaru -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <a href="{% url 'centro_costos:home_ta' %}" class="text-decoration-none">
+                <div class="card h-100 shadow-hover">
+                    <div class="project-card-img-container">
+                        <img src="{% static 'images/centro_costos/gastos3.png' %}" alt="Gastos"
+                            class="project-card-img">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold mb-0">TUPAC AMARU</h5>
+                        <small class="text-muted">Ver detalles</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Canta Callao -->
+        <div class="col-12 col-md-6 col-lg-3">
+            <a href="{% url 'centro_costos:home_cc' %}" class="text-decoration-none">
+                <div class="card h-100 shadow-hover">
+                    <div class="project-card-img-container">
+                        <img src="{% static 'images/centro_costos/gastos3.png' %}" alt="Gastos"
+                            class="project-card-img">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold mb-0">CANTA CALLAO</h5>
+                        <small class="text-muted">Ver detalles</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Dynamic Projects -->
+        {% for ng in ngs|slice:"2:" %}
+        <div class="col-12 col-md-6 col-lg-3">
+            <a href="{% url 'centro_costos:lista_gastos_proyecto' pk=ng.pk %}" class="text-decoration-none">
+                <div class="card h-100 shadow-hover">
+                    <div class="project-card-img-container">
+                        <img src="{% static 'images/centro_costos/gastos3.png' %}" alt="Gastos"
+                            class="project-card-img">
+                    </div>
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold mb-0">{{ ng.nombre }}</h5>
+                        <small class="text-muted">Ver detalles</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+
+        {% if request.user.role == 3 or request.user.role == 2 %}
+        <!-- Add New (Optional - commented out in original but keeping structure if needed) -->
+        {% endif %}
+
+        <!-- Modal -->
+        <div class="modal fade" id="nuevoGastoModal" tabindex="-1" aria-labelledby="nuevoGastoModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="nuevoGastoModalLabel">Agregar Nuevo Centro de Costo</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'centro_costos:agregar_nuevo_gasto' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_nombre" class="form-label">Nombre</label>
+                                {{ form.nombre }}
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary px-5 py-2">Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

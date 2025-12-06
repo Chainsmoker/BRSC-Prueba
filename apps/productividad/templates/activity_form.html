@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<h2>{% if object %}Editar{% else %}Agregar{% endif %} actividad</h2>
+<form method="post">{% csrf_token %}
+{{ form.as_p }}
+<button class="btn btn-dark" style="background-color: #000 !important;">Guardar</button>
+<a href="{% url 'productivity:calendar' %}">Cancelar</a>
+</form>
+{% endblock %}

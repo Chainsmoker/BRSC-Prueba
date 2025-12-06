@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} Registro de Asistencia {% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/asistencia/detail.css' %}">
+{% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">REGISTRO DE ASISTENCIA <i class="bi bi-fingerprint"></i></h1>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+
+        <div>
+            <label for="mes" class="form-label fw-bold">Mes:</label>
+            <select id="mes" class="form-select"></select>
+        </div>
+
+        <div>
+            <label for="anio" class="form-label fw-bold">Año:</label>
+            <select id="anio" class="form-select"></select>
+        </div>
+
+        {% if request.user.role == 3 %}
+        <div>
+            <label for="trabajador" class="form-label fw-bold">Trabajador:</label>
+            <select id="trabajador" class="form-select">
+                <option value="todos">Todos</option>
+                {% for t in trabajadores %}
+                    <option value="{{ t.trabajador__id }}">
+                        {{ t.trabajador__first_name }} {{ t.trabajador__last_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tabla-asistencia" class="table table-hover table-bordered-gray">
+            <thead class="table-dark">
+                <tr>
+                    {% if request.user.role == 3 %}
+                    <th>TRABAJADOR</th>
+                    {% endif %}
+                    <th>FECHA</th>
+                    <th>HORA DE ENTRADA</th>
+                    <th>HORA DE SALIDA</th>
+                    <th>HORAS TRABAJADAS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asistencia in asistencias %}
+                    <tr data-fecha="{{ asistencia.fecha|date:'Y-m-d' }}" 
+                        data-trabajador="{{ asistencia.trabajador.id }}">
+                        {% if request.user.role == 3 %}
+                        <td>{{ asistencia.trabajador.first_name }} {{ asistencia.trabajador.last_name }}</td>
+                        {% endif %}
+                        <td>{{ asistencia.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ asistencia.entrada|time:"H:i"|default:"—" }}</td>
+                        <td>{{ asistencia.salida|time:"H:i"|default:"—" }}</td>
+                        <td>
+                            {% if asistencia.horas_trabajadas %}
+                                {{ asistencia.horas_trabajadas|time:"H:i" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No hay registros de asistencia.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const mesSelect = document.getElementById("mes");
+    const anioSelect = document.getElementById("anio");
+    const trabajadorSelect = document.getElementById("trabajador");
+    const filas = document.querySelectorAll("#tabla-asistencia tbody tr");
+
+    const meses = [
+        "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+        "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+    ];
+
+    // === Llenar select de meses ===
+    meses.forEach((mes, i) => {
+        const opt = document.createElement("option");
+        opt.value = i + 1;
+        opt.textContent = mes;
+        mesSelect.appendChild(opt);
+    });
+
+    const anioActual = new Date().getFullYear();
+    for (let y = anioActual - 1; y <= anioActual + 1; y++) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
+        if (y === anioActual) opt.selected = true;
+        anioSelect.appendChild(opt);
+    }
+
+    const mesActual = new Date().getMonth() + 1;
+    mesSelect.value = mesActual.toString();
+
+    function filtrar() {
+        const mes = parseInt(mesSelect.value);
+        const anio = parseInt(anioSelect.value);
+        const trabajador = trabajadorSelect ? trabajadorSelect.value : null;
+        let visible = 0;
+
+        filas.forEach(fila => {
+            const fecha = fila.dataset.fecha;
+            const trabajadorId = fila.dataset.trabajador;
+            if (!fecha) return;
+
+            const [year, month] = fecha.split("-").map(Number);
+            const coincideMes = (year === anio && month === mes);
+            const coincideTrabajador = (trabajador === "todos" || trabajador === trabajadorId || !trabajador);
+
+            if (coincideMes && coincideTrabajador) {
+                fila.style.display = "";
+                visible++;
+            } else {
+                fila.style.display = "none";
+            }
+        });
+
+        const tbody = document.querySelector("#tabla-asistencia tbody");
+        const noRows = tbody.querySelector(".no-rows");
+        if (visible === 0) {
+            if (!noRows) {
+                const tr = document.createElement("tr");
+                tr.classList.add("no-rows");
+                tr.innerHTML = `<td colspan="5" class="text-center">No hay registros de asistencia para los filtros seleccionados.</td>`;
+                tbody.appendChild(tr);
+            }
+        } else if (noRows) {
+            noRows.remove();
+        }
+    }
+
+    filtrar();
+    mesSelect.addEventListener("change", filtrar);
+    anioSelect.addEventListener("change", filtrar);
+    if (trabajadorSelect) trabajadorSelect.addEventListener("change", filtrar);
+});
+</script>
+
+{% endblock %}

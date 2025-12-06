@@ -1,0 +1,597 @@
+{% extends "base.html" %}
+
+{% block title %} Lista de Proyectos {% endblock %}
+
+{% block body %}
+{% include "../components/navbar.html" %}
+<style>
+    label.form-label {
+        font-weight: 500;
+    }
+
+    .modal-content {
+        border-radius: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #F2FDFF !important;
+        box-shadow: 0 0 0 0.2rem rgb(237, 237, 237);
+    }
+    .form-select:focus {
+        border-color: #F2FDFF !important;
+        box-shadow: 0 0 0 0.2rem rgb(237, 237, 237);
+    }
+
+    .table-bordered-gray {
+        border: 1px solid #000;
+        border-collapse: collapse;
+    }
+
+    .table-bordered-gray th,
+    .table-bordered-gray td {
+        border: 1px solid #000;
+    }
+ 
+</style>
+
+<div style="text-align: center;">
+    <div style="font-weight: bold; font-size: 24px; color: #000;">
+        LISTADO DE PROYECTOS CANTA CALLAO
+    </div>
+</div>
+
+<div class="px-3" style="background-color: #FCEEEE;">
+ <!-- Sección de búsqueda -->
+                    <h5 class="mb-2">Filtros para localizar el proyecto&nbsp;&nbsp;<i class="bi bi-search"></i></h5>
+                    <div class="row mb-3">
+                        <!-- Expediente -->
+                        <div class="col">
+                            <label class="form-label">Proyecto</label>
+                            <input type="text" class="form-control filter-input" data-column="2">
+                        </div>
+
+                        <div class="col">
+                            <label class="form-label">Presupuesto</label>
+                            <input type="text" class="form-control filter-input" data-column="3">
+                        </div>
+                        
+                       
+                        <!-- Botón Limpiar Filtros -->
+                        <div class="col">
+                            <label class="form-label" style="color: #F2FDFF;">Limpiar</label>
+                            <a href="{% url 'control_expediente:lista_expediente' %}" id="clearFilters"
+                                class="form-control btn btn-secondary text-center"
+                                style="background-color: #BF0909; border: none; line-height: 25px;"><i class="bi bi-eraser-fill"></i>&nbsp;Limpiar
+                                Filtros</a>
+                        </div>
+                        <!-- Botón Limpiar Filtros -->
+                        <div class="col">
+                            <label class="form-label" style="color: #F2FDFF;">Limpiar</label>
+                            <a href="{% url 'control_expediente:lista_expediente' %}" id="clearFilters"
+                                class="form-control btn btn-secondary text-center"
+                                style="background-color: #BF0909; border: none; line-height: 25px;"><i class="bi bi-eraser-fill"></i>&nbsp;Exportar Excel</a>
+                        </div>
+                    </div>
+                    <!-- Botón para abrir el modal de agregar -->
+                    {% if request.user.role != 1 %}
+                    <center>
+                        <button type="button" class="btn text-white"
+                            style="background-color: #BF0909; border: none;"
+                            data-bs-toggle="modal" data-bs-target="#documentModal">
+                            <i class="bi bi-plus-circle"></i>&nbsp; Agregar Nuevo Proyecto
+                        </button>
+                    </center>
+                    {% endif %}
+</div>
+
+<div class="container mt-2" style="max-width: 100%;">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <!-- Tabla -->
+                    <div style="max-height: 65vh; overflow-y: auto; overflow-x: auto;">
+                        <table class="table table-hover table-bordered-gray" id="documentsTable">
+                            <thead class="" style="position: sticky; top: 0; z-index: 1;">
+                                <tr style="background-color: #26292E;">
+                                    <th style="color: white;">ITEM</th>
+                                    <th style="color: white;">FECHA</th>
+                                    <th style="color: white;">PROYECTO</th>
+                                    <th style="color: white;">PRESUPUESTO</th>
+                                    <th style="color: white;">SUSTENTO</th>
+                                    {% if request.user.role != 1 %}
+                                    <th style="color: white;">ACCIONES</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+    {% for cj in caso_judiciales %}
+    <tr class="clickable-row"
+        data-href="{% url 'p_canta_callao:ver_actividades' cj.id %}">
+        
+        <td>{{ cj.id|default:'' }}</td>
+        <td class="text-nowrap">{{ cj.fecha|default:''|date:'d/m/Y' }}</td>
+        <td class="text-nowrap">{{ cj.proyecto }}</td>
+        <td >{{ cj.presupuesto|default:''|safe }}</td>
+
+        <td class="sustento">
+                                        {% if cj.sustento %}
+                                        <button type="button" style="background: none; border: none; color: 
+                                            #BF0909; cursor: pointer;" data-bs-toggle="modal"
+                                            data-bs-target="#pdfViewerModal" data-pdf-url="{{ cj.sustento.url }}"
+                                            class="ver-pdf-btn">
+                                            <i class="bi bi-file-earmark-pdf-fill"></i> PDF <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        {% else %}
+                                         <div style="color: #afafaf">
+                                            &nbsp;<i class="bi bi-file-earmark-pdf-fill"></i> PDF <i class="bi bi-x-lg"></i>
+                                         </div>
+                                        {% endif %}
+                                    </td>
+
+        {% if request.user.role != 1 %}
+        <td class="action-column">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-sm text-white me-2 btn-editar"
+                    style="background-color: #434c5e;" title="Editar proyecto" data-bs-toggle="modal"
+                    data-bs-target="#editCasoJudicialModal" data-id="{{ cj.id }}"
+                    data-proyecto="{{ cj.proyecto|default_if_none:'' }}"
+                    data-fecha="{{ cj.fecha|date:'Y-m-d'|default_if_none:'' }}"
+                    data-presupuesto="{{ cj.presupuesto|default_if_none:'' }}"
+                    data-sustento="{{ cj.sustento|default_if_none:'' }}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+
+                <a href="{% url 'p_canta_callao:eliminar_proyecto' cj.id %}"
+                    class="btn btn-sm text-white btnEliminar"
+                    style="background-color: #BF0909;"
+                    title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </div>
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</tbody>
+                        </table>
+                    </div>
+
+<!-- Modal para ver PDF -->
+                    <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-xl modal-dialog-centered" id="draggablePdfModal">
+                            <div class="modal-content" style="background-color: #000">
+                                <div class="modal-header" id="pdfModalHeader">
+                                    <h5 class="modal-title" style="color: #eceff4;">Visualizar documento PDF</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"
+                                        style="background-color: #BF0909;"></button>
+                                </div>
+                                <div class="modal-body p-1" style="height: 80vh;">
+                                    <iframe id="pdfIframe" src="" width="100%" height="100%"
+                                        style="border: none;"></iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+<!-- Modal para agregar nueva expediente -->
+<div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" id="draggableDocumentModal">
+    <div class="modal-content">
+
+      <!-- Encabezado del modal -->
+      <div class="modal-header text-white" id="documentModalHeader" style="background-color: #BF0909;">
+        <h5 class="modal-title" id="documentModalLabel">Agregar Nuevo Proyecto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Cuerpo del modal -->
+      <div class="modal-body">
+        <form id="expedienteForm" method="POST" action="{% url 'p_canta_callao:lista_proyectos' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.media }}
+
+          <div class="container-fluid">
+            <div class="row g-3">
+
+              <!-- Fecha -->
+              <div class="col-md-4">
+                <label for="{{ form.fecha.id_for_label }}" class="form-label fw-semibold">Fecha</label>
+                {{ form.fecha }}
+              </div>
+
+              <!-- Proyecto -->
+              <div class="col-md-4">
+                <label for="{{ form.proyecto.id_for_label }}" class="form-label fw-semibold">Proyecto</label>
+                {{ form.proyecto }}
+              </div>
+
+              <!-- Presupuesto -->
+              <div class="col-md-4">
+                <label for="{{ form.presupuesto.id_for_label }}" class="form-label fw-semibold">Presupuesto</label>
+                {{ form.presupuesto }}
+              </div>
+
+              <!-- Sustento -->
+              <div class="col-md-12">
+                <label for="{{ form.sustento.id_for_label }}" class="form-label fw-semibold">Sustento (PDF)</label>
+                <div class="input-group">
+                  {{ form.sustento }}
+                </div>
+                <div class="form-text text-muted">Solo se aceptan archivos en formato PDF.</div>
+              </div>
+
+            </div>
+
+            <!-- Botón Guardar -->
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-dark px-5 py-2 btnGuardar">
+                <i class="bi bi-save me-2"></i>Guardar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+                    <!-- Modal para editar proyecto -->
+<div class="modal fade" id="editCasoJudicialModal" tabindex="-1"
+    aria-labelledby="editCasoJudicialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="editCasoJudicialDialog">
+        <div class="modal-content">
+            <div class="modal-header text-white" id="editCasoJudicialHeader"
+                style="background-color: #BF0909;">
+                <h5 class="modal-title" id="editCasoJudicialModalLabel">Editar Proyecto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'p_canta_callao:editar_proyecto' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_id" name="id">
+                    <input type="hidden" id="edit_seguimiento_id" name="seguimiento_id">
+                    
+                    <div class="container">
+                        <div class="row g-3">
+                            <!-- Primera Fila -->
+                             <div class="col-md-4">
+                                <label for="edit_fecha" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="edit_fecha" name="fecha">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_proyecto" class="form-label">Proyecto</label>
+                                <input type="text" class="form-control" id="edit_proyecto" name="proyecto">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_presupuesto" class="form-label">Presupuesto</label>
+                                <input type="number" class="form-control" id="edit_presupuesto" name="presupuesto">
+                            </div>
+
+                            <!-- Segunda Fila -->
+                             <div class="col-md-12">
+                                <label for="edit_sustento" class="form-label">Sustento (PDF)</label>
+                                <input type="file" class="form-control" id="edit_sustento" name="sustento">
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn px-5 py-2 btnGuardar2"
+                                style="background-color: #000; color: #fff;">Guardar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function makeModalDraggable(modalId, dialogId, headerId) {
+    const modal = document.getElementById(modalId);
+    const modalDialog = document.getElementById(dialogId);
+    const modalHeader = document.getElementById(headerId);
+
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    modal.addEventListener('shown.bs.modal', function () {
+        const rect = modalDialog.getBoundingClientRect();
+        modalDialog.style.position = 'fixed';
+        modalDialog.style.top = rect.top + 'px';
+        modalDialog.style.left = rect.left + 'px';
+        modalDialog.style.margin = '0';
+        modalDialog.style.transform = 'none';
+        modalDialog.style.width = rect.width + 'px';
+    });
+
+    modalHeader.addEventListener('mousedown', function (e) {
+        if (e.target.closest('button')) return;
+        isDragging = true;
+        const rect = modalDialog.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+    });
+
+    document.addEventListener('mousemove', function (e) {
+        if (isDragging) {
+            modalDialog.style.top = `${e.clientY - offsetY}px`;
+            modalDialog.style.left = `${e.clientX - offsetX}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', function () {
+        isDragging = false;
+    });
+
+    modal.addEventListener('hidden.bs.modal', function () {
+        modalDialog.removeAttribute('style');
+    });
+}
+
+                        document.addEventListener("DOMContentLoaded", function () {
+
+                            // MODALES MOVIBLES
+                            makeModalDraggable('pdfViewerModal', 'draggablePdfModal', 'pdfModalHeader');
+
+                            const table = document.getElementById("documentsTable");
+                            const tbody = table.querySelector("tbody");
+                            const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                            // Función para extraer año y número de código tipo "008-23"
+                            function parseCodigo(codigo) {
+                                const [numStr, yearStr] = codigo.split("-");
+                                const numero = parseInt(numStr, 10);
+                                const anio = parseInt(yearStr, 10);
+                                return { anio, numero };
+                            }
+
+                            rows.sort((a, b) => {
+                                const codigoA = a.children[0].textContent.trim();
+                                const codigoB = b.children[0].textContent.trim();
+
+                                const aParsed = parseCodigo(codigoA);
+                                const bParsed = parseCodigo(codigoB);
+
+                                // Primero ordenar por año, luego por número
+                                if (aParsed.anio !== bParsed.anio) {
+                                    return aParsed.anio - bParsed.anio;
+                                } else {
+                                    return aParsed.numero - bParsed.numero;
+                                }
+                            });
+
+                            // Vacía el tbody y vuelve a agregar las filas ordenadas
+                            tbody.innerHTML = "";
+                            rows.forEach(row => tbody.appendChild(row));
+                        });
+
+                        document.addEventListener('DOMContentLoaded', function () {
+
+                            const rows = document.querySelectorAll(".clickable-row");
+
+        rows.forEach(row => {
+            row.addEventListener("click", function (e) {
+                // Evita que haga redirect si se hace clic en un botón o enlace dentro de la fila
+                if (e.target.closest(".action-column") || e.target.closest(".sustento") || e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('.btn-group')) {
+                    return;
+                }
+                const url = this.dataset.href;
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+
+
+    // FILTRO EN TIEMPO REAL
+document.querySelectorAll('.filter-input').forEach(input => {
+    input.addEventListener('input', filtrarTabla);
+});
+
+function filtrarTabla() {
+    const filtros = {};
+
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const columna = input.dataset.column;
+        const valor = input.value.trim().toLowerCase();
+        if (valor) {
+            filtros[columna] = valor;
+        }
+    });
+
+    document.querySelectorAll('#documentsTable tbody tr').forEach(fila => {
+        let mostrar = true;
+
+        for (const columna in filtros) {
+            const celda = fila.cells[parseInt(columna)];
+            if (celda) {
+                const textoCelda = celda.textContent.trim().toLowerCase();
+
+                if (columna === '9') { // Columna 9 (índice 8) - coincidencia exacta
+                    if (textoCelda !== filtros[columna]) {
+                        mostrar = false;
+                        break;
+                    }
+                } else {
+                    if (!textoCelda.includes(filtros[columna])) {
+                        mostrar = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        fila.style.display = mostrar ? '' : 'none';
+    });
+}
+
+
+    // EDITAR REGISTRO
+    const editButtons = document.querySelectorAll('.btn-editar');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault(); // Si el botón es un enlace, previene la redirección automática
+
+            const codigo = button.getAttribute('data-codigo');
+            const id = button.getAttribute('data-id');
+
+
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_proyecto').value = button.getAttribute('data-proyecto');
+            document.getElementById('edit_fecha').value = button.getAttribute('data-fecha');
+            document.getElementById('edit_presupuesto').value = button.getAttribute('data-presupuesto');
+            
+
+        });
+    });
+
+});
+
+
+                        // BTN GUARDAR
+                        (function () {
+                            const botonesGuardar = document.querySelectorAll('.btnGuardar');
+
+                            botonesGuardar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Detiene envío por defecto
+
+                                    const form = this.closest('form');
+                                    const campos = form.querySelectorAll("input, select, textarea");
+                                    let formValido = true;
+
+                                    campos.forEach(campo => {
+                                        if (
+                                            campo.offsetParent !== null && // Solo visibles
+                                            campo.hasAttribute("required") && 
+                                            !campo.value.trim()
+                                        ) {
+                                            formValido = false;
+                                        }
+                                    });
+
+                                    if (!formValido) {
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: 'Campos incompletos',
+                                            text: 'Por favor completa todos los campos obligatorios.',
+                                            confirmButtonText: 'Entendido',
+                                            confirmButtonColor: '#BF0909',
+                                        });
+                                        return; // Evita que siga
+                                    }
+
+                                    // Si está todo completo
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: "top-end",
+                                        showConfirmButton: false,
+                                        timer: 1000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.onmouseenter = Swal.stopTimer;
+                                            toast.onmouseleave = Swal.resumeTimer;
+                                        }
+                                    });
+
+                                    Toast.fire({
+                                        icon: "success",
+                                        title: "Registro guardado correctamente"
+                                    }).then(() => {
+                                        form.submit(); // Recién aquí se envía
+                                    });
+                                });
+                            });
+                        })();
+
+                        // BTN ACTUALIZAR
+                        (function () {
+                            const botonesGuardar = document.querySelectorAll('.btnGuardar2');
+
+                            botonesGuardar.forEach(boton => {
+                                boton.addEventListener('click', function (e) {
+                                    e.preventDefault(); // Previene el submit inmediato
+
+                                    const form = this.closest('form');
+
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: "top-end",
+                                        showConfirmButton: false,
+                                        timer: 1000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.onmouseenter = Swal.stopTimer;
+                                            toast.onmouseleave = Swal.resumeTimer;
+                                        }
+                                    });
+
+                                    Toast.fire({
+                                        icon: "success",
+                                        title: "Registro actualizado correctamente"
+                                    }).then(() => {
+                                        form.submit(); // Enviar el formulario después del toast
+                                    });
+                                });
+                            });
+                        })();
+
+                        // BTN ELIMINAR
+                        (function () {
+        const botonesEliminar = document.querySelectorAll('.btnEliminar');
+
+        botonesEliminar.forEach(boton => {
+            boton.addEventListener('click', function (e) {
+                e.preventDefault(); // Evita que el enlace se siga inmediatamente
+
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar?',
+                    text: "Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#BF0909',
+                    cancelButtonColor: '#6F6F6F',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirige al href del botón
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        });
+    })();
+
+    // === MOSTRAR PDF EN EL MODAL ===
+document.addEventListener('DOMContentLoaded', function () {
+    const pdfButtons = document.querySelectorAll('.ver-pdf-btn');
+    const pdfIframe = document.getElementById('pdfIframe');
+    const pdfModal = document.getElementById('pdfViewerModal');
+
+    pdfButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const pdfUrl = this.getAttribute('data-pdf-url');
+            if (pdfUrl) {
+                // Cargar el PDF en el iframe
+                pdfIframe.src = pdfUrl;
+            }
+        });
+    });
+
+    // Limpiar el iframe al cerrar el modal para evitar que quede cargado
+    pdfModal.addEventListener('hidden.bs.modal', function () {
+        pdfIframe.src = '';
+    });
+});
+
+                    </script>
+
+                    {% endblock %}
