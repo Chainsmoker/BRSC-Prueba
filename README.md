@@ -1,5 +1,9 @@
 # Despliegue de la app - Usando Docker
 
+# CREDENCIALES
+username: alejandro
+pass: test12345
+
 # Construir la imagen
 docker build -t django-app .
 
@@ -8,10 +12,6 @@ docker run -p 8000:8000 django-app
 
 # Ingresar
 Ingresar a localhost:8000 o http://0.0.0.0:8000 (el host que brinda el contenedor)
-
-# CREDENCIALES
-username: alejandro
-pass: test12345
 
 # Despliegue de la app - Forma tradicional
 
@@ -39,4 +39,5 @@ python manage.py migrate
 ```
 python manage.py runserver
 ```
+
 
